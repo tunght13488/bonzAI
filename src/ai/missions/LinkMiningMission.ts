@@ -1,11 +1,12 @@
-import {Mission} from "./Mission";
 import {Operation} from "../operations/Operation";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
+
 export class LinkMiningMission extends Mission {
 
-    linkMiners: Agent[];
-    source: Source;
-    link: StructureLink;
+    public linkMiners: Agent[];
+    public source: Source;
+    public link: StructureLink;
 
     /**
      * Sends a miner to a source with a link, energy transfer is managed by LinkNetworkMission
@@ -21,22 +22,23 @@ export class LinkMiningMission extends Mission {
         this.link = link;
     }
 
-    initMission() {
+    public initMission() {
     }
 
-    roleCall() {
+    public roleCall() {
         this.linkMiners = this.headCount(this.name, () => this.workerBody(5, 4, 5), () => 1);
     }
 
-    missionActions() {
-        for (let miner of this.linkMiners) {
+    public missionActions() {
+        for (const miner of this.linkMiners) {
             this.minerActions(miner);
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
-    invalidateMissionCache() {
+
+    public invalidateMissionCache() {
     }
 
     private minerActions(miner: Agent) {
@@ -61,8 +63,8 @@ export class LinkMiningMission extends Mission {
         let roadPos: RoomPosition;
 
         for (let i = 1; i <= 8; i++) {
-            let position = this.source.pos.getPositionAtDirection(i);
-            if (!position.isPassible(true)) continue;
+            const position = this.source.pos.getPositionAtDirection(i);
+            if (!position.isPassable(true)) continue;
             if (!position.isNearTo(this.link)) continue;
             if (position.lookForStructure(STRUCTURE_ROAD)) {
                 roadPos = position;
@@ -70,7 +72,8 @@ export class LinkMiningMission extends Mission {
 
             if (miner.pos.inRangeTo(position, 0)) {
                 miner.memory.inPosition = true;
-            } else {
+            }
+            else {
                 miner.moveItOrLoseIt(position, "miner");
             }
             return; // early
@@ -82,7 +85,8 @@ export class LinkMiningMission extends Mission {
 
         if (miner.pos.inRangeTo(roadPos, 0)) {
             miner.memory.inPosition = true;
-        } else {
+        }
+        else {
             miner.moveItOrLoseIt(roadPos, "miner");
         }
     }

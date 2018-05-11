@@ -1,12 +1,13 @@
-import {Mission} from "./Mission";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
+
 export class LinkNetworkMission extends Mission {
 
-    conduits: Agent[];
+    public conduits: Agent[];
 
-    storageLinks: StructureLink[] = [];
-    sourceLinks: StructureLink[] = [];
-    controllerLink: StructureLink;
+    public storageLinks: StructureLink[] = [];
+    public sourceLinks: StructureLink[] = [];
+    public controllerLink: StructureLink;
 
     /**
      * Manages linknetwork in room to efficiently send energy between the storage, controller, and sources
@@ -19,9 +20,9 @@ export class LinkNetworkMission extends Mission {
         super(operation, "linkNetwork");
     }
 
-    initMission() {
+    public initMission() {
         if (this.room.storage) {
-            let controllerBattery = this.room.controller.getBattery();
+            const controllerBattery = this.room.controller.getBattery();
             if (controllerBattery instanceof StructureLink) {
                 this.controllerLink = controllerBattery;
             }
@@ -32,17 +33,17 @@ export class LinkNetworkMission extends Mission {
         }
     }
 
-    roleCall() {
-        let conduitBody = () => {
+    public roleCall() {
+        const conduitBody = () => {
             return this.workerBody(0, 8, 4);
         };
-        let max = () => this.storageLinks.length > 0 && this.controllerLink ? 1: 0;
-        let memory = { scavanger: RESOURCE_ENERGY };
-        this.conduits = this.headCount("conduit", conduitBody, max, {prespawn: 10, memory: memory });
+        const max = () => this.storageLinks.length > 0 && this.controllerLink ? 1 : 0;
+        const memory = {scavanger: RESOURCE_ENERGY};
+        this.conduits = this.headCount("conduit", conduitBody, max, {prespawn: 10, memory});
     }
 
-    missionActions() {
-        for (let conduit of this.conduits) {
+    public missionActions() {
+        for (const conduit of this.conduits) {
             this.conduitActions(conduit);
         }
 
@@ -54,14 +55,15 @@ export class LinkNetworkMission extends Mission {
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
-    invalidateMissionCache() {
+
+    public invalidateMissionCache() {
     }
 
     private findStorageLinks() {
         if (this.room.controller.level === 8) {
-            let storageLink = this.room.storage.findMemoStructure(STRUCTURE_LINK, 2) as StructureLink;
+            const storageLink = this.room.storage.findMemoStructure(STRUCTURE_LINK, 2) as StructureLink;
             if (storageLink) {
                 this.storageLinks.push(storageLink);
             }
@@ -69,9 +71,9 @@ export class LinkNetworkMission extends Mission {
         else {
             if (!this.memory.storageLinkIds || Game.time % 100 === 7) {
                 // I had this as a lodash function but it looked ugly
-                let linkIds = [];
-                let links = this.room.findStructures(STRUCTURE_LINK) as StructureLink[];
-                for (let link of links) {
+                const linkIds = [];
+                const links = this.room.findStructures(STRUCTURE_LINK) as StructureLink[];
+                for (const link of links) {
                     if (link.pos.inRangeTo(this.room.storage, 2)) {
                         this.storageLinks.push(link);
                         linkIds.push(link.id);
@@ -80,8 +82,8 @@ export class LinkNetworkMission extends Mission {
                 this.memory.storageLinkIds = linkIds;
             }
             else {
-                for (let id of this.memory.storageLinkIds) {
-                    let link = Game.getObjectById(id) as StructureLink;
+                for (const id of this.memory.storageLinkIds) {
+                    const link = Game.getObjectById(id) as StructureLink;
                     if (link) {
                         this.storageLinks.push(link);
                     }
@@ -96,8 +98,8 @@ export class LinkNetworkMission extends Mission {
     }
 
     private findSourceLinks() {
-        for (let source of this.sources) {
-            let link = source.findMemoStructure(STRUCTURE_LINK, 2) as Link;
+        for (const source of this.sources) {
+            const link = source.findMemoStructure(STRUCTURE_LINK, 2) as Link;
             if (link) {
                 this.sourceLinks.push(link);
             }
@@ -121,9 +123,9 @@ export class LinkNetworkMission extends Mission {
 
     private moveToPosition(conduit: Agent) {
         for (let i = 1; i <= 8; i++) {
-            let position = this.room.storage.pos.getPositionAtDirection(i);
+            const position = this.room.storage.pos.getPositionAtDirection(i);
             let invalid = false;
-            for (let link of this.storageLinks) {
+            for (const link of this.storageLinks) {
                 if (!link.pos.isNearTo(position)) {
                     invalid = true;
                     break;
@@ -147,7 +149,7 @@ export class LinkNetworkMission extends Mission {
             conduit.withdraw(this.room.storage, RESOURCE_ENERGY);
         }
         else {
-            for (let link of this.storageLinks) {
+            for (const link of this.storageLinks) {
                 if (link.energy < link.energyCapacity) {
                     conduit.transfer(link, RESOURCE_ENERGY);
                     break;
@@ -159,7 +161,7 @@ export class LinkNetworkMission extends Mission {
     private conduitBetaActions(conduit: Agent) {
         if (this.storageLinks.length === 0) return;
 
-        let link = this.storageLinks[0];
+        const link = this.storageLinks[0];
         if (conduit.carry.energy > 0) {
             if (link.energy < 400) {
                 conduit.transfer(link, RESOURCE_ENERGY, Math.min(400 - link.energy, conduit.carry.energy));
@@ -180,7 +182,7 @@ export class LinkNetworkMission extends Mission {
     private linkNetworkAlpha() {
         if (!this.controllerLink) return;
 
-        let longestDistance = this.findLongestDistance(this.controllerLink, this.storageLinks);
+        const longestDistance = this.findLongestDistance(this.controllerLink, this.storageLinks);
 
         if (Game.time % (Math.ceil(longestDistance / this.storageLinks.length)) === 0) {
 
@@ -189,7 +191,7 @@ export class LinkNetworkMission extends Mission {
                 this.memory.linkFiringIndex = 0;
             }
 
-            let linkToFire = this.storageLinks[this.memory.linkFiringIndex];
+            const linkToFire = this.storageLinks[this.memory.linkFiringIndex];
             if (linkToFire) {
                 linkToFire.transferEnergy(this.controllerLink);
             }
@@ -205,8 +207,8 @@ export class LinkNetworkMission extends Mission {
     }
 
     private linkNetworkBeta() {
-        let firstLink = this.sourceLinks[0];
-        let storageLink = this.storageLinks[0];
+        const firstLink = this.sourceLinks[0];
+        const storageLink = this.storageLinks[0];
         if (!storageLink || !this.controllerLink) return; // early
         if (!firstLink) {
             if (storageLink && storageLink.cooldown === 0 && this.controllerLink) {
@@ -229,7 +231,7 @@ export class LinkNetworkMission extends Mission {
         }
 
         if (this.sources.length === 1) return;
-        let secondLink = this.sourceLinks[1];
+        const secondLink = this.sourceLinks[1];
         if (Game.time % 40 === 10 && secondLink && storageLink) {
             secondLink.transferEnergy(storageLink);
         }
@@ -237,8 +239,8 @@ export class LinkNetworkMission extends Mission {
 
     private findLongestDistance(origin: RoomObject, objects: RoomObject[]): number {
         let distance = 0;
-        for (let object of objects) {
-            let dist = origin.pos.getRangeTo(object);
+        for (const object of objects) {
+            const dist = origin.pos.getRangeTo(object);
             if (dist > distance) {
                 distance = dist;
             }

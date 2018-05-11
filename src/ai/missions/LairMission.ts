@@ -1,10 +1,11 @@
-import {Mission} from "./Mission";
-import {Operation} from "../operations/Operation";
-import {Agent} from "./Agent";
-import {InvaderGuru} from "./InvaderGuru";
 import {helper} from "../../helpers/helper";
+import {Operation} from "../operations/Operation";
 import {traveler} from "../Traveler";
+import {Agent} from "./Agent";
 import {HostileAgent} from "./HostileAgent";
+import {InvaderGuru} from "./InvaderGuru";
+import {Mission} from "./Mission";
+
 export class LairMission extends Mission {
 
     public memory: {
@@ -42,7 +43,7 @@ export class LairMission extends Mission {
     private maxRangers = () => this.invaderGuru.invadersPresent || this.invaderGuru.invaderProbable ? 1 : 0;
     private rangerBody = () => this.configBody({[RANGED_ATTACK]: 25, [MOVE]: 17, [HEAL]: 8});
 
-    roleCall() {
+    public roleCall() {
         this.trappers = this.headCount("trapper", this.trapperBody, this.maxTrappers, {
             prespawn: this.distanceToSpawn + 100,
             skipMoveToRoom: true,
@@ -58,33 +59,34 @@ export class LairMission extends Mission {
         // });
     }
 
-    missionActions() {
+    public missionActions() {
         if (this.invaderGuru.invadersPresent) {
-            let invaderKiller = this.findInvaderDuty();
+            const invaderKiller = this.findInvaderDuty();
             // if (!invaderKiller) { this.assignInvaderDuty(); }
         }
 
-        for (let trapper of this.trappers) {
+        for (const trapper of this.trappers) {
             if (trapper.memory.invaderDuty && this.invaderGuru.invadersPresent) {
                 this.invaderDutyActions(trapper);
-            } else {
+            }
+            else {
                 this.trapperActions(trapper);
             }
         }
 
-        for (let scavenger of this.scavengers) {
+        for (const scavenger of this.scavengers) {
             this.scavengersActions(scavenger);
         }
 
-        for (let ranger of this.rangers) {
+        for (const ranger of this.rangers) {
             this.rangerActions(ranger);
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
     }
 
     private trapperActions(trapper: Agent) {
@@ -98,18 +100,20 @@ export class LairMission extends Mission {
 
         let isAttacking = false;
         let range;
-        let nearestHostile = trapper.pos.findClosestByRange(this.room.hostiles) as Creep;
+        const nearestHostile = trapper.pos.findClosestByRange(this.room.hostiles) as Creep;
         if (nearestHostile && trapper.pos.isNearTo(nearestHostile)) {
             isAttacking = trapper.attack(nearestHostile) === OK;
             trapper.move(trapper.pos.getDirectionTo(nearestHostile));
-        } else {
-            let keeper = this.targetLair.keeper;
+        }
+        else {
+            const keeper = this.targetLair.keeper;
             if (keeper) {
                 range = trapper.pos.getRangeTo(keeper);
                 if (range > 1) {
                     trapper.travelTo(keeper);
                 }
-            } else {
+            }
+            else {
                 trapper.travelTo(this.targetLair, {range: 1});
             }
         }
@@ -121,27 +125,29 @@ export class LairMission extends Mission {
 
     private scavengersActions(scavenger: Agent) {
 
-        let fleeing = scavenger.fleeHostiles();
+        const fleeing = scavenger.fleeHostiles();
         if (fleeing) return; // early
 
-        let hasLoad = scavenger.hasLoad();
+        const hasLoad = scavenger.hasLoad();
         if (hasLoad) {
-            let storage = this.storeStructure;
+            const storage = this.storeStructure;
             if (scavenger.pos.isNearTo(storage)) {
                 scavenger.transfer(storage, RESOURCE_ENERGY);
                 scavenger.travelTo(this.flag);
-            } else {
+            }
+            else {
                 scavenger.travelTo(storage);
             }
             return;
         }
 
-        let closest = this.findDroppedEnergy(scavenger);
+        const closest = this.findDroppedEnergy(scavenger);
         if (closest) {
             if (scavenger.pos.isNearTo(closest)) {
                 scavenger.pickup(closest);
                 scavenger.say("yoink!", true);
-            } else {
+            }
+            else {
                 scavenger.travelTo(closest);
             }
         }
@@ -152,11 +158,11 @@ export class LairMission extends Mission {
 
     private assignKeepers() {
         if (!this.lairs) return;
-        let lairs = this.room.findStructures(STRUCTURE_KEEPER_LAIR);
-        let hostiles = this.room.hostiles;
-        for (let hostile of hostiles) {
+        const lairs = this.room.findStructures(STRUCTURE_KEEPER_LAIR);
+        const hostiles = this.room.hostiles;
+        for (const hostile of hostiles) {
             if (hostile.owner.username === "Source Keeper") {
-                let closestLair = hostile.pos.findClosestByRange(lairs) as StructureKeeperLair;
+                const closestLair = hostile.pos.findClosestByRange(lairs) as StructureKeeperLair;
                 if (!_.includes(this.lairs, closestLair)) continue;
                 closestLair.keeper = hostile;
             }
@@ -167,11 +173,12 @@ export class LairMission extends Mission {
         if (this.lairs.length > 0) {
             let lowestTicks = Number.MAX_VALUE;
             let lowestLair;
-            for (let lair of this.lairs) {
+            for (const lair of this.lairs) {
                 let lastTicks = 0;
                 if (lair.keeper) {
                     return lair;
-                } else {
+                }
+                else {
                     // if this lair is going to spawn sooner than the last one in the list, return it
                     if (lair.ticksToSpawn < lastTicks) {
                         return lair;
@@ -189,7 +196,7 @@ export class LairMission extends Mission {
 
     private findDroppedEnergy(scavenger: Agent): Resource {
         if (scavenger.memory.resourceId) {
-            let resource = Game.getObjectById(scavenger.memory.resourceId) as Resource;
+            const resource = Game.getObjectById(scavenger.memory.resourceId) as Resource;
             if (resource) {
                 return resource;
             }
@@ -199,7 +206,7 @@ export class LairMission extends Mission {
             }
         }
         else {
-            let resource = scavenger.pos.findClosestByRange(
+            const resource = scavenger.pos.findClosestByRange(
                 _.filter(this.room.find(FIND_DROPPED_RESOURCES),
                     (r: Resource) => r.amount > 100 && r.resourceType === RESOURCE_ENERGY) as Resource[]);
             if (resource) {
@@ -210,22 +217,22 @@ export class LairMission extends Mission {
     }
 
     private bestLairOrder(): string[] {
-        let keeperLairs: StructureKeeperLair[] = this.room.findStructures<StructureKeeperLair>(STRUCTURE_KEEPER_LAIR);
-        let distanceBetweenLairAB: {[AtoB: string]: number} = {};
+        const keeperLairs: StructureKeeperLair[] = this.room.findStructures<StructureKeeperLair>(STRUCTURE_KEEPER_LAIR);
+        const distanceBetweenLairAB: { [AtoB: string]: number } = {};
 
         let order = 0;
-        let indices = _.map(keeperLairs, lair => order++);
+        const indices = _.map(keeperLairs, lair => order++);
 
         console.log(`Finding best keeper path in ${this.room.name}`);
 
         let bestPermutation: number[];
         let bestSum = Number.MAX_VALUE;
-        for (let permutation of helper.permutator(indices)) {
+        for (const permutation of helper.permutator(indices)) {
             let sum = 0;
             for (let i = 0; i < permutation.length; i++) {
-                let indexA = permutation[i];
-                let indexB = permutation[(i + 1) % permutation.length];
-                let key = _.sortBy([indexA, indexB]).join("");
+                const indexA = permutation[i];
+                const indexB = permutation[(i + 1) % permutation.length];
+                const key = _.sortBy([indexA, indexB]).join("");
                 if (!distanceBetweenLairAB[key]) {
                     distanceBetweenLairAB[key] = traveler.findTravelPath(keeperLairs[indexA], keeperLairs[indexB]).path.length;
                 }
@@ -254,10 +261,10 @@ export class LairMission extends Mission {
     }
 
     private assignInvaderDuty() {
-        let lastTrapperSpawned = _.last(this.trappers);
+        const lastTrapperSpawned = _.last(this.trappers);
         if (!lastTrapperSpawned) { return; }
 
-        let keepersInRange = _.filter(lastTrapperSpawned.pos.findInRange<Creep>(FIND_HOSTILE_CREEPS, 1),
+        const keepersInRange = _.filter(lastTrapperSpawned.pos.findInRange<Creep>(FIND_HOSTILE_CREEPS, 1),
             creep => creep.owner.username === "Source Keeper");
         if (keepersInRange.length > 0) { return; }
 
@@ -278,26 +285,26 @@ export class LairMission extends Mission {
 
         if (Game.time === ranger.memory.leaderControl) { return; }
 
-        let tactic = this.rangerTactic(ranger);
+        const tactic = this.rangerTactic(ranger);
 
         // charge
         if (tactic === RangerTactic.Charge) {
-            let bestTarget = this.findBestTarget(ranger);
+            const bestTarget = this.findBestTarget(ranger);
 
             let movingTarget = false;
             if (ranger.room !== this.room) {
                 movingTarget = true;
             }
-            ranger.travelTo(bestTarget, {range: 0, movingTarget: movingTarget});
+            ranger.travelTo(bestTarget, {range: 0, movingTarget});
             return;
         }
 
-
-        let chasers = _.filter(this.invaderGuru.invaders,
+        const chasers = _.filter(this.invaderGuru.invaders,
             hostileAgent => hostileAgent.potentials[RANGED_ATTACK] > 0);
         if (tactic === RangerTactic.Retreat) {
             ranger.fleeByPath(chasers, 5, 5);
-        } else if (tactic === RangerTactic.HitAndRun) {
+        }
+        else if (tactic === RangerTactic.HitAndRun) {
             ranger.fleeByPath(chasers, 2, 0);
         }
     }
@@ -307,13 +314,13 @@ export class LairMission extends Mission {
     }
 
     private invaderDutyActions(trapper: Agent) {
-        let ranger = trapper.pos.findClosestByRange(this.rangers);
+        const ranger = trapper.pos.findClosestByRange(this.rangers);
         if (!ranger) {
             this.soloDutyActions(trapper);
             return;
         }
 
-        let attackedCreep = trapper.standardMelee(2000);
+        const attackedCreep = trapper.standardMelee(2000);
 
         if (!trapper.isNearTo(ranger)) {
             if (!trapper.memory.needHeal && trapper.hits < trapper.hitsMax - 500) {
@@ -336,36 +343,37 @@ export class LairMission extends Mission {
 
         ranger.memory.leaderControl = Game.time;
 
-        let target = this.findBestTarget(trapper);
+        const target = this.findBestTarget(trapper);
         if (target.potentials[HEAL] > 0) {
             trapper.travelTo(target, {range: 0});
             ranger.travelTo(trapper, {range: 0});
             return;
-        } else {
+        }
+        else {
             ranger.travelTo(target, {range: 0});
-            trapper.travelTo(target, {range: 0})
+            trapper.travelTo(target, {range: 0});
         }
     }
 
     private soloDutyActions(trapper: Agent) {
-        let fleeing = trapper.fleeByPath(this.invaderGuru.invaders, 10, 5);
+        const fleeing = trapper.fleeByPath(this.invaderGuru.invaders, 10, 5);
         if (!fleeing) {
             this.trapperActions(trapper);
         }
     }
 
-
     private rangerTactic(ranger: Agent): RangerTactic {
-        let healPotential = ranger.getActiveBodyparts(HEAL) * 12;
+        const healPotential = ranger.getActiveBodyparts(HEAL) * 12;
         if (ranger.hits < ranger.hitsMax - healPotential) {
             return RangerTactic.Retreat;
         }
 
-        let expectedDamage = _.sum(ranger.pos.findInRange(this.invaderGuru.invaders, 5),
+        const expectedDamage = _.sum(ranger.pos.findInRange(this.invaderGuru.invaders, 5),
             hostileAgent => hostileAgent.potentials[RANGED_ATTACK]);
         if (expectedDamage > healPotential) {
             return RangerTactic.HitAndRun;
-        } else {
+        }
+        else {
             return RangerTactic.Charge;
         }
     }

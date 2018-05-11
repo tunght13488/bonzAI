@@ -1,8 +1,8 @@
-import {Mission} from "./Mission";
+import {DefenseGuru} from "../operations/DefenseGuru";
 import {Operation} from "../operations/Operation";
 import {Agent} from "./Agent";
-import {DefenseGuru} from "../operations/DefenseGuru";
 import {Guru} from "./Guru";
+import {Mission} from "./Mission";
 
 const SANDBAG_THRESHOLD = 1000000;
 
@@ -39,16 +39,16 @@ export class MasonMission extends Mission {
             allowUnboosted = !(this.room.terminal && this.room.terminal.store[RESOURCE_CATALYZED_LEMERGIUM_ACID] > 1000);
         }
         this.masons = this.headCount("mason", () => this.workerBody(16, 8, 12), this.maxMasons, {
-            boosts: boosts,
-            allowUnboosted: allowUnboosted,
-            prespawn: 1
+            boosts,
+            allowUnboosted,
+            prespawn: 1,
         });
         this.carts = this.headCount("masonCart", () => this.workerBody(0, 4, 2), this.maxCarts);
     }
 
     public missionActions() {
 
-        for (let mason of this.masons) {
+        for (const mason of this.masons) {
             if (this.defenseGuru.hostiles.length > 0) {
                 this.sandbagActions(mason);
             }
@@ -57,7 +57,7 @@ export class MasonMission extends Mission {
             }
         }
 
-        for (let cart of this.carts) {
+        for (const cart of this.carts) {
             this.masonCartActions(cart);
         }
     }
@@ -71,7 +71,7 @@ export class MasonMission extends Mission {
 
     private masonActions(agent: Agent) {
 
-        let rampart = this.getRampart(agent);
+        const rampart = this.getRampart(agent);
         if (!rampart) {
             agent.idleOffRoad();
             return;
@@ -87,9 +87,10 @@ export class MasonMission extends Mission {
         if (agent.isFull(300) || stolen) {
             agent.idleNear(rampart, 3, true);
             return;
-        } else {
-            let extension = this.getExtension(agent, rampart);
-            let outcome = agent.retrieve(extension, RESOURCE_ENERGY);
+        }
+        else {
+            const extension = this.getExtension(agent, rampart);
+            const outcome = agent.retrieve(extension, RESOURCE_ENERGY);
             if (outcome === OK && !agent.creep.pos.inRangeTo(rampart, 3)) {
                 agent.travelTo(rampart);
             }
@@ -105,13 +106,13 @@ export class MasonMission extends Mission {
             }
         }
 
-        let construction = this.findConstruction(agent);
+        const construction = this.findConstruction(agent);
         if (construction) {
             agent.travelToAndBuild(construction);
             return;
         }
 
-        let emergencySandbag = this.getEmergencySandbag(agent);
+        const emergencySandbag = this.getEmergencySandbag(agent);
         if (emergencySandbag) {
             if (agent.pos.inRangeTo(emergencySandbag, 3)) {
                 agent.creep.repair(emergencySandbag);
@@ -124,20 +125,20 @@ export class MasonMission extends Mission {
 
     private masonCartActions(agent: Agent) {
 
-        let lowestMason = _(this.masons).sortBy((a: Agent) => a.creep.carry.energy).head();
+        const lowestMason = _(this.masons).sortBy((a: Agent) => a.creep.carry.energy).head();
         if (!lowestMason || !this.room.storage) {
             agent.idleOffRoad();
             return;
         }
 
         if (agent.isFull()) {
-            let outcome = agent.deliver(lowestMason.creep, RESOURCE_ENERGY);
+            const outcome = agent.deliver(lowestMason.creep, RESOURCE_ENERGY);
             if (outcome === OK) {
-                agent.travelTo(this.room.storage)
+                agent.travelTo(this.room.storage);
             }
         }
         else {
-            let outcome = agent.retrieve(this.room.storage, RESOURCE_ENERGY);
+            const outcome = agent.retrieve(this.room.storage, RESOURCE_ENERGY);
             if (outcome === OK) {
                 agent.travelTo(lowestMason);
             }
@@ -151,7 +152,7 @@ export class MasonMission extends Mission {
             }
             else {
                 const MIN_RAMPART_HITS = 50000000;
-                let lowestRampart = _(this.room.findStructures<Structure>(STRUCTURE_RAMPART)).sortBy("hits").head();
+                const lowestRampart = _(this.room.findStructures<Structure>(STRUCTURE_RAMPART)).sortBy("hits").head();
                 this.memory.needMason = lowestRampart && lowestRampart.hits < MIN_RAMPART_HITS;
             }
         }
@@ -161,7 +162,7 @@ export class MasonMission extends Mission {
     get sandbags(): RoomPosition[] {
         if (!this._sandbags) {
             if (!this.memory.sandbags) {
-                let sandbags = this.findSandbags();
+                const sandbags = this.findSandbags();
                 this.memory.sandbags = Guru.serializePositions(sandbags);
             }
             this._sandbags = Guru.deserializePositions(this.memory.sandbags, this.room.name);
@@ -169,13 +170,13 @@ export class MasonMission extends Mission {
         return this._sandbags;
     }
 
-    getEmergencySandbag(agent: Agent): Structure {
+    public getEmergencySandbag(agent: Agent): Structure {
 
-        let emergencyThreshold = SANDBAG_THRESHOLD / 10;
+        const emergencyThreshold = SANDBAG_THRESHOLD / 10;
 
-        let nextConstruction: RoomPosition[] = [];
-        for (let sandbag of this.sandbags) {
-            let rampart = sandbag.lookForStructure(STRUCTURE_RAMPART);
+        const nextConstruction: RoomPosition[] = [];
+        for (const sandbag of this.sandbags) {
+            const rampart = sandbag.lookForStructure(STRUCTURE_RAMPART);
             if (rampart && rampart.hits < emergencyThreshold) {
                 return rampart;
             }
@@ -186,7 +187,7 @@ export class MasonMission extends Mission {
 
         if (this.room.find(FIND_CONSTRUCTION_SITES).length > 0) { return; }
 
-        let bestPosition = agent.pos.findClosestByRange(this.defenseGuru.hostiles).pos.findClosestByRange(nextConstruction);
+        const bestPosition = agent.pos.findClosestByRange(this.defenseGuru.hostiles).pos.findClosestByRange(nextConstruction);
         if (bestPosition) {
             bestPosition.createConstructionSite(STRUCTURE_RAMPART);
         }
@@ -198,8 +199,8 @@ export class MasonMission extends Mission {
         let rightBound = 0;
         let topBound = 50;
         let bottomBound = 0;
-        let wallRamparts = [];
-        for (let rampart of this.room.findStructures<Structure>(STRUCTURE_RAMPART)) {
+        const wallRamparts = [];
+        for (const rampart of this.room.findStructures<Structure>(STRUCTURE_RAMPART)) {
             if (rampart.pos.lookForStructure(STRUCTURE_ROAD)) continue;
             if (rampart.pos.lookForStructure(STRUCTURE_EXTENSION)) continue;
             wallRamparts.push(rampart);
@@ -211,11 +212,11 @@ export class MasonMission extends Mission {
 
         console.log(leftBound, rightBound, topBound, bottomBound);
 
-        let sandbags = [];
-        for (let structure of this.room.find<Structure>(FIND_STRUCTURES)) {
+        const sandbags = [];
+        for (const structure of this.room.find<Structure>(FIND_STRUCTURES)) {
             if (structure.structureType === STRUCTURE_RAMPART) continue;
             if (structure.pos.lookForStructure(STRUCTURE_RAMPART)) continue;
-            let nearbyRampart = structure.pos.findInRange(wallRamparts, 2)[0];
+            const nearbyRampart = structure.pos.findInRange(wallRamparts, 2)[0];
             if (!nearbyRampart) continue;
             if (structure.pos.x < leftBound || structure.pos.x > rightBound) continue;
             if (structure.pos.y < topBound || structure.pos.y > bottomBound) continue;
@@ -225,31 +226,31 @@ export class MasonMission extends Mission {
         return sandbags;
     }
 
-    getRampart(agent: Agent): Structure {
-        let findRampart = () => {
+    public getRampart(agent: Agent): Structure {
+        const findRampart = () => {
             let lowestHits = 100000;
-            let lowestRampart = _(this.room.findStructures<Structure>(STRUCTURE_RAMPART)).sortBy("hits").head();
+            const lowestRampart = _(this.room.findStructures<Structure>(STRUCTURE_RAMPART)).sortBy("hits").head();
             if (lowestRampart) {
                 lowestHits = lowestRampart.hits;
             }
-            let myRampart = _(this.room.findStructures<Structure>(STRUCTURE_RAMPART))
+            const myRampart = _(this.room.findStructures<Structure>(STRUCTURE_RAMPART))
                 .filter((s: Structure) => s.hits < lowestHits + 100000)
                 .sortBy((s: Structure) => agent.pos.getRangeTo(s))
                 .head();
             if (myRampart) return myRampart;
         };
-        let forgetRampart = (s: Structure) => agent.creep.ticksToLive % 500 === 0;
+        const forgetRampart = (s: Structure) => agent.creep.ticksToLive % 500 === 0;
         return agent.rememberStructure(findRampart, forgetRampart, "rampartId") as Structure;
     }
 
-    getExtension(agent: Agent, rampart: Structure): StructureExtension | StructureStorage {
-        let fullExtensions = _.filter(this.room.findStructures<StructureExtension>(STRUCTURE_EXTENSION),
+    public getExtension(agent: Agent, rampart: Structure): StructureExtension | StructureStorage {
+        const fullExtensions = _.filter(this.room.findStructures<StructureExtension>(STRUCTURE_EXTENSION),
             (e: StructureExtension) => e.energy > 0);
-        let extension = rampart.pos.findClosestByRange<StructureExtension>(fullExtensions);
-        return agent.pos.findClosestByRange([this.room.storage, extension])
+        const extension = rampart.pos.findClosestByRange<StructureExtension>(fullExtensions);
+        return agent.pos.findClosestByRange([this.room.storage, extension]);
     }
 
-    findConstruction(agent: Agent): ConstructionSite {
+    public findConstruction(agent: Agent): ConstructionSite {
         return agent.pos.findClosestByRange<ConstructionSite>(FIND_MY_CONSTRUCTION_SITES);
     }
 }

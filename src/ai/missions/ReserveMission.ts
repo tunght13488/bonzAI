@@ -1,17 +1,18 @@
-import {Mission} from "./Mission";
-import {Operation} from "../operations/Operation";
-import {notifier} from "../../notifier";
 import {helper} from "../../helpers/helper";
 import {empire} from "../../helpers/loopHelper";
+import {notifier} from "../../notifier";
+import {Operation} from "../operations/Operation";
 import {ARTROOMS} from "../WorldMap";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
+
 export class ReserveMission extends Mission {
 
-    reservers: Agent[];
-    bulldozers: Agent[];
-    controller: StructureController;
+    public reservers: Agent[];
+    public bulldozers: Agent[];
+    public controller: StructureController;
 
-    memory: {
+    public memory: {
         wallCheck: boolean;
         needBulldozer: boolean;
     };
@@ -20,7 +21,7 @@ export class ReserveMission extends Mission {
         super(operation, "claimer");
     }
 
-    initMission() {
+    public initMission() {
         if (!this.hasVision) return; //
         this.controller = this.room.controller;
 
@@ -29,33 +30,33 @@ export class ReserveMission extends Mission {
         }
     }
 
-    roleCall() {
-        let needReserver = () => !this.controller.my && (!this.controller.reservation ||
+    public roleCall() {
+        const needReserver = () => !this.controller.my && (!this.controller.reservation ||
             this.controller.reservation.ticksToEnd < 3000) ? 1 : 0;
-        let potency = this.spawnGroup.room.controller.level === 8 ? 5 : 2;
-        let reserverBody = () => this.configBody({
+        const potency = this.spawnGroup.room.controller.level === 8 ? 5 : 2;
+        const reserverBody = () => this.configBody({
             claim: potency,
-            move: potency
+            move: potency,
         });
         this.reservers = this.headCount("claimer", reserverBody, needReserver);
         this.bulldozers = this.headCount("dozer", () => this.bodyRatio(4, 0, 1, 1),
             () => this.memory.needBulldozer ? 1 : 0);
     }
 
-    missionActions() {
-        for (let reserver of this.reservers) {
+    public missionActions() {
+        for (const reserver of this.reservers) {
             this.reserverActions(reserver);
         }
 
-        for (let dozer of this.bulldozers) {
+        for (const dozer of this.bulldozers) {
             this.bulldozerActions(dozer);
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
     }
 
     private reserverActions(reserver: Agent) {
@@ -67,7 +68,7 @@ export class ReserveMission extends Mission {
         if (reserver.pos.isNearTo(this.controller)) {
             reserver.reserveController(this.controller);
             if (!this.memory.wallCheck) {
-                this.memory.wallCheck = this.destroyWalls(reserver, this.room)
+                this.memory.wallCheck = this.destroyWalls(reserver, this.room);
             }
         }
         else {
@@ -86,7 +87,7 @@ export class ReserveMission extends Mission {
             return true;
         }
         else {
-            let roomAvailable = Game.gcl.level - _.filter(Game.rooms, (r: Room) => r.controller && r.controller.my).length;
+            const roomAvailable = Game.gcl.level - _.filter(Game.rooms, (r: Room) => r.controller && r.controller.my).length;
             if (this.room.findStructures(STRUCTURE_WALL).length > 0 && !ARTROOMS[room.name] && roomAvailable > 0) {
                 surveyor.claimController(room.controller);
                 return false;
@@ -98,13 +99,13 @@ export class ReserveMission extends Mission {
     }
 
     private checkBulldozer(): boolean {
-        let ret = empire.traveler.findTravelPath(this.spawnGroup, this.room.controller);
+        const ret = empire.traveler.findTravelPath(this.spawnGroup, this.room.controller);
         if (!ret.incomplete) {
             console.log(`RESERVER: No bulldozer necessary in ${this.operation.name}`);
             return false;
         }
 
-        let ignoredStructures = empire.traveler.findTravelPath(this.spawnGroup, this.room.controller,
+        const ignoredStructures = empire.traveler.findTravelPath(this.spawnGroup, this.room.controller,
             {range: 1, ignoreStructures: true});
         if (ignoredStructures.incomplete) {
             notifier.log(`RESERVER: bad bulldozer path in ${this.operation.name}, please investigate.`);
@@ -112,11 +113,12 @@ export class ReserveMission extends Mission {
             return false;
         }
 
-        for (let position of ignoredStructures.path) {
+        for (const position of ignoredStructures.path) {
             if (position.roomName !== this.room.name) { continue; }
-            if (position.isPassible(true)) { continue; }
-            if (position.lookForStructure(STRUCTURE_WALL) || position.lookForStructure(STRUCTURE_RAMPART))
-            return true;
+            if (position.isPassable(true)) { continue; }
+            if (position.lookForStructure(STRUCTURE_WALL) || position.lookForStructure(STRUCTURE_RAMPART)) {
+                return true;
+            }
         }
     }
 
@@ -129,15 +131,15 @@ export class ReserveMission extends Mission {
         }
         else {
             if (dozer.room === this.room) {
-                let returnData: {nextPos: RoomPosition} = {nextPos: undefined};
+                const returnData: { nextPos: RoomPosition } = {nextPos: undefined};
                 dozer.travelTo(this.room.controller, {
                     ignoreStructures: true,
                     ignoreStuck: true,
-                    returnData: returnData,
+                    returnData,
                 });
 
                 if (returnData.nextPos) {
-                    let structure = returnData.nextPos.lookFor<Structure>(LOOK_STRUCTURES)[0];
+                    const structure = returnData.nextPos.lookFor<Structure>(LOOK_STRUCTURES)[0];
                     if (structure) {
                         dozer.dismantle(structure);
                     }

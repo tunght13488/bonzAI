@@ -1,29 +1,30 @@
-import {Mission} from "./Mission";
-import {Operation} from "../operations/Operation";
+import {PRIORITY_BUILD} from "../../config/constants";
 import {helper} from "../../helpers/helper";
 import {TransportAnalysis} from "../../interfaces";
-import {PRIORITY_BUILD} from "../../config/constants";
 import {DefenseGuru} from "../operations/DefenseGuru";
+import {Operation} from "../operations/Operation";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
+
 export class BuilderMission extends Mission {
 
-    builders: Agent[];
-    supplyCarts: Agent[];
-    sites: ConstructionSite[];
-    prioritySites: ConstructionSite[];
-    walls: Structure[];
-    remoteSpawn: boolean;
-    activateBoost: boolean;
-    defenseGuru: DefenseGuru;
+    public builders: Agent[];
+    public supplyCarts: Agent[];
+    public sites: ConstructionSite[];
+    public prioritySites: ConstructionSite[];
+    public walls: Structure[];
+    public remoteSpawn: boolean;
+    public activateBoost: boolean;
+    public defenseGuru: DefenseGuru;
 
-    memory: {
+    public memory: {
         maxHitsToBuild: number
         max: number
         transportAnalysis: TransportAnalysis
         rampartPos: RoomPosition
         manualTargetId: string
         manualTargetHits: number
-        prespawn: number
+        prespawn: number,
     };
     private _analysis: TransportAnalysis;
 
@@ -33,14 +34,13 @@ export class BuilderMission extends Mission {
      * @param defenseGuru
      * @param activateBoost
      */
-
     constructor(operation: Operation, defenseGuru: DefenseGuru, activateBoost = false) {
         super(operation, "builder");
         this.defenseGuru = defenseGuru;
         this.activateBoost = activateBoost;
     }
 
-    initMission() {
+    public initMission() {
         if (this.room !== this.spawnGroup.room) {
             this.remoteSpawn = true;
         }
@@ -50,7 +50,7 @@ export class BuilderMission extends Mission {
 
         if (Game.time % 10 === 5) {
             // this should be a little more cpu-friendly since it basically will only run in missionRoom that has construction
-            for (let site of this.sites) {
+            for (const site of this.sites) {
                 if (site.structureType === STRUCTURE_RAMPART || site.structureType === STRUCTURE_WALL) {
                     this.memory.maxHitsToBuild = 2000;
                     break;
@@ -61,81 +61,81 @@ export class BuilderMission extends Mission {
         if (!this.memory.maxHitsToBuild) this.memory.maxHitsToBuild = 2000;
     }
 
-    maxBuilders = () => {
+    public maxBuilders = () => {
         if (this.sites.length === 0 || this.defenseGuru.hostiles.length > 0) {
             return 0;
         }
 
-        let potency = this.findBuilderPotency();
-        let builderCost = potency * 100 + Math.ceil(potency / 2) * 50 + 150 * potency;
+        const potency = this.findBuilderPotency();
+        const builderCost = potency * 100 + Math.ceil(potency / 2) * 50 + 150 * potency;
         return Math.min(Math.ceil(builderCost / this.spawnGroup.maxSpawnEnergy), 3);
     };
 
-    maxCarts = () => {
+    public maxCarts = () => {
         if (this.sites.length === 0 || this.defenseGuru.hostiles.length > 0) {
             return 0;
         }
         return this.analysis.cartsNeeded;
     };
 
-    builderBody = () => {
-        let potency = this.findBuilderPotency();
+    public builderBody = () => {
+        const potency = this.findBuilderPotency();
         if (this.spawnGroup.maxSpawnEnergy < 550) {
-            return this.bodyRatio(1, 3, .5, 1, potency)
+            return this.bodyRatio(1, 3, .5, 1, potency);
         }
 
-        let potencyCost = potency * 100 + Math.ceil(potency / 2) * 50;
-        let energyForCarry = this.spawnGroup.maxSpawnEnergy - potencyCost;
-        let cartCarryCount = this.analysis.carryCount;
-        let carryCount = Math.min(Math.floor(energyForCarry / 50), cartCarryCount);
+        const potencyCost = potency * 100 + Math.ceil(potency / 2) * 50;
+        const energyForCarry = this.spawnGroup.maxSpawnEnergy - potencyCost;
+        const cartCarryCount = this.analysis.carryCount;
+        const carryCount = Math.min(Math.floor(energyForCarry / 50), cartCarryCount);
         if (this.spawnGroup.room === this.room) {
-            return this.workerBody(potency, carryCount, Math.ceil(potency / 2))
+            return this.workerBody(potency, carryCount, Math.ceil(potency / 2));
         }
         else {
             return this.workerBody(potency, carryCount, potency);
         }
     };
 
-    roleCall() {
+    public roleCall() {
 
         let builderMemory;
         if (this.activateBoost) {
             builderMemory = {
                 scavanger: RESOURCE_ENERGY,
                 boosts: [RESOURCE_CATALYZED_LEMERGIUM_ACID],
-                allowUnboosted: true
+                allowUnboosted: true,
             };
         }
         else {
-            builderMemory = { scavanger: RESOURCE_ENERGY };
+            builderMemory = {scavanger: RESOURCE_ENERGY};
         }
 
         this.builders = this.headCount(this.name, this.builderBody, this.maxBuilders,
-            {prespawn: this.memory.prespawn, memory: builderMemory });
+            {prespawn: this.memory.prespawn, memory: builderMemory});
         this.builders = _.sortBy(this.builders, (c: Creep) => c.carry.energy);
 
-        let cartMemory = {
-            scavanger: RESOURCE_ENERGY
+        const cartMemory = {
+            scavanger: RESOURCE_ENERGY,
         };
         this.supplyCarts = this.headCount(this.name + "Cart",
             () => this.workerBody(0, this.analysis.carryCount, this.analysis.moveCount), this.maxCarts,
-            {prespawn: this.memory.prespawn, memory: cartMemory });
+            {prespawn: this.memory.prespawn, memory: cartMemory});
     }
 
-    missionActions() {
-        for (let builder of this.builders) {
+    public missionActions() {
+        for (const builder of this.builders) {
             this.builderActions(builder);
         }
 
-        for (let cart of this.supplyCarts) {
+        for (const cart of this.supplyCarts) {
             this.builderCartActions(cart);
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
         this.memory.transportAnalysis = undefined;
         if (Math.random() < 0.01) this.memory.maxHitsToBuild = undefined;
     }
@@ -144,7 +144,7 @@ export class BuilderMission extends Mission {
 
         this.registerPrespawn(builder);
 
-        let hasLoad = builder.hasLoad() || this.supplyCarts.length > 0;
+        const hasLoad = builder.hasLoad() || this.supplyCarts.length > 0;
         if (!hasLoad) {
             builder.procureEnergy();
             return;
@@ -152,7 +152,7 @@ export class BuilderMission extends Mission {
 
         // repair the rampart you just built
         if (this.memory.rampartPos) {
-            let rampart = helper.deserializeRoomPosition(this.memory.rampartPos).lookForStructure(STRUCTURE_RAMPART);
+            const rampart = helper.deserializeRoomPosition(this.memory.rampartPos).lookForStructure(STRUCTURE_RAMPART);
             if (rampart && rampart.hits < 10000) {
                 if (rampart.pos.inRangeTo(builder, 3)) {
                     builder.repair(rampart);
@@ -171,7 +171,8 @@ export class BuilderMission extends Mission {
         let closest;
         if (this.prioritySites.length > 0) {
             closest = builder.pos.findClosestByRange(this.prioritySites);
-        } else {
+        }
+        else {
             closest = builder.pos.findClosestByRange(this.sites);
         }
 
@@ -181,9 +182,9 @@ export class BuilderMission extends Mission {
         }
 
         // has target
-        let range = builder.pos.getRangeTo(closest);
+        const range = builder.pos.getRangeTo(closest);
         if (range <= 3) {
-            let outcome = builder.build(closest);
+            const outcome = builder.build(closest);
             if (outcome === OK) {
                 builder.yieldRoad(closest);
             }
@@ -202,7 +203,7 @@ export class BuilderMission extends Mission {
     }
 
     private buildWalls(builder: Agent) {
-        let target = this.findMasonTarget(builder);
+        const target = this.findMasonTarget(builder);
         if (!target) {
             if (builder.room.controller && builder.room.controller.level < 8) {
                 this.upgradeController(builder);
@@ -214,7 +215,7 @@ export class BuilderMission extends Mission {
         }
 
         if (builder.pos.inRangeTo(target, 3)) {
-            let outcome = builder.repair(target);
+            const outcome = builder.repair(target);
             if (outcome === OK) {
                 builder.yieldRoad(target);
             }
@@ -225,20 +226,20 @@ export class BuilderMission extends Mission {
     }
 
     private findMasonTarget(builder: Agent): Structure {
-        let manualTarget = this.findManualTarget();
+        const manualTarget = this.findManualTarget();
         if (manualTarget) return manualTarget;
 
         if (this.room.hostiles.length > 0 && this.room.hostiles[0].owner.username !== "Invader") {
             if (!this.walls) {
                 this.walls = _(this.room.findStructures(STRUCTURE_RAMPART).concat(this.room.findStructures(STRUCTURE_WALL)))
-                    .filter((s: Structure)=>s.hits)
+                    .filter((s: Structure) => s.hits)
                     .sortBy("hits")
                     .value() as Structure[];
             }
-            let lowest = this.walls[0];
+            const lowest = this.walls[0];
             _.pull(this.walls, lowest);
             if (builder.memory.emergencyRepairId) {
-                let structure = Game.getObjectById(builder.memory.emergencyRepairId) as Structure;
+                const structure = Game.getObjectById(builder.memory.emergencyRepairId) as Structure;
                 if (structure && !builder.pos.inRangeTo(lowest, 3)) {
                     return structure;
                 }
@@ -250,7 +251,7 @@ export class BuilderMission extends Mission {
         }
 
         if (builder.memory.wallId) {
-            let wall = Game.getObjectById(builder.memory.wallId) as Structure;
+            const wall = Game.getObjectById(builder.memory.wallId) as Structure;
             if (wall && wall.hits < this.memory.maxHitsToBuild) {
                 return wall;
             }
@@ -271,7 +272,7 @@ export class BuilderMission extends Mission {
 
             if (structures.length === 0) {
                 // increase maxHitsToBuild if there are walls/ramparts in missionRoom and re-call function
-                if (this.room.findStructures(STRUCTURE_RAMPART).concat(this.room.findStructures(STRUCTURE_WALL).filter((s: Structure)=>s.hits)).length > 0) {
+                if (this.room.findStructures(STRUCTURE_RAMPART).concat(this.room.findStructures(STRUCTURE_WALL).filter((s: Structure) => s.hits)).length > 0) {
                     // TODO: seems to produce some pretty uneven walls, find out why
                     this.memory.maxHitsToBuild += Math.pow(10, Math.floor(Math.log(this.memory.maxHitsToBuild) / Math.log(10)));
                     return this.findMasonTarget(builder);
@@ -279,7 +280,7 @@ export class BuilderMission extends Mission {
                 // do nothing if there are no walls/ramparts in missionRoom
             }
 
-            let closest = builder.pos.findClosestByRange(structures) as Structure;
+            const closest = builder.pos.findClosestByRange(structures) as Structure;
             if (closest) {
                 builder.memory.wallId = closest.id;
                 return closest;
@@ -289,7 +290,7 @@ export class BuilderMission extends Mission {
 
     private findManualTarget() {
         if (this.memory.manualTargetId) {
-            let target = Game.getObjectById(this.memory.manualTargetId) as Structure;
+            const target = Game.getObjectById(this.memory.manualTargetId) as Structure;
             if (target && target.hits < this.memory.manualTargetHits) {
                 return target;
             }
@@ -314,35 +315,37 @@ export class BuilderMission extends Mission {
         if (this.room.storage) {
             if (this.room.storage.store.energy < 50000) {
                 return 1;
-            } else {
+            }
+            else {
                 return Math.min(Math.floor(this.room.storage.store.energy / 7500), 10);
             }
-        } else {
-           return this.room.find(FIND_SOURCES).length * 2
+        }
+        else {
+            return this.room.find(FIND_SOURCES).length * 2;
         }
     }
 
     private builderCartActions(cart: Agent) {
 
-        let suppliedAgent = _.head(this.builders);
+        const suppliedAgent = _.head(this.builders);
         if (!suppliedAgent) {
             cart.idleOffRoad(this.flag);
             return;
         }
 
-        let hasLoad = cart.hasLoad();
+        const hasLoad = cart.hasLoad();
         if (!hasLoad) {
             cart.procureEnergy(suppliedAgent);
             return;
         }
 
-        let rangeToBuilder = cart.pos.getRangeTo(suppliedAgent);
+        const rangeToBuilder = cart.pos.getRangeTo(suppliedAgent);
         if (rangeToBuilder > 3) {
             cart.travelTo(suppliedAgent);
             return;
         }
 
-        let overCapacity = cart.carry.energy > suppliedAgent.carryCapacity - suppliedAgent.carry.energy;
+        const overCapacity = cart.carry.energy > suppliedAgent.carryCapacity - suppliedAgent.carry.energy;
         if (suppliedAgent.carry.energy > suppliedAgent.carryCapacity * .5 && overCapacity) {
             cart.yieldRoad(suppliedAgent);
             return;
@@ -355,13 +358,13 @@ export class BuilderMission extends Mission {
 
         cart.transfer(suppliedAgent.creep, RESOURCE_ENERGY);
         if (!overCapacity && this.room.storage) {
-            cart.travelTo(this.room.storage)
+            cart.travelTo(this.room.storage);
         }
     }
 
     get analysis(): TransportAnalysis {
         if (!this._analysis) {
-            let potency = this.findBuilderPotency();
+            const potency = this.findBuilderPotency();
             let distance = 20;
             if (this.room.storage) {
                 distance = 10;

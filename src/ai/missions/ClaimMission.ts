@@ -1,43 +1,42 @@
-import {Mission} from "./Mission";
 import {Operation} from "../operations/Operation";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
+
 export class ClaimMission extends Mission {
 
-    claimers: Agent[];
-    controller: StructureController;
+    public claimers: Agent[];
+    public controller: StructureController;
+    public getMax = () => (this.controller && !this.controller.my) || !this.hasVision ? 1 : 0;
 
     constructor(operation: Operation) {
         super(operation, "claimer");
     }
 
-    initMission() {
-        //if (!this.hasVision) return; // early
-        if(this.room) {
+    public initMission() {
+        // if (!this.hasVision) return; // early
+        if (this.room) {
             this.controller = this.room.controller;
         }
     }
 
-    getMax = () => (this.controller && !this.controller.my) || !this.hasVision ? 1 : 0;
-
-    roleCall() {
-        this.claimers = this.headCount("claimer", () => [CLAIM, MOVE], this.getMax, { blindSpawn: true });
+    public roleCall() {
+        this.claimers = this.headCount("claimer", () => [CLAIM, MOVE], this.getMax, {blindSpawn: true});
     }
 
-    missionActions() {
+    public missionActions() {
 
-        for (let claimer of this.claimers) {
+        for (const claimer of this.claimers) {
             this.claimerActions(claimer);
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
     }
 
     private claimerActions(claimer: Agent) {
-
         console.log(`ey`);
         if (!this.controller) {
             claimer.idleOffRoad();

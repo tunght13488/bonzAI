@@ -1,13 +1,12 @@
-import {SurveyMission} from "./SurveyMission";
-import {helper} from "../../helpers/helper";
-import {Empire} from "../Empire";
-import {SpawnGroup} from "../SpawnGroup";
-import {notifier} from "../../notifier";
-import {Mission} from "./Mission";
-import {empire} from "../../helpers/loopHelper";
-import {WorldMap, ROOMTYPE_ALLEY, ROOMTYPE_SOURCEKEEPER} from "../WorldMap";
-import {Traveler} from "../Traveler";
 import {USERNAME} from "../../config/constants";
+import {helper} from "../../helpers/helper";
+import {empire} from "../../helpers/loopHelper";
+import {notifier} from "../../notifier";
+import {SpawnGroup} from "../SpawnGroup";
+import {Traveler} from "../Traveler";
+import {ROOMTYPE_ALLEY, ROOMTYPE_SOURCEKEEPER, WorldMap} from "../WorldMap";
+import {Mission} from "./Mission";
+import {SurveyMission} from "./SurveyMission";
 
 interface SurveyData {
     danger: boolean;
@@ -27,7 +26,7 @@ export class SurveyAnalyzer {
     private memory: {
         chosenRoom: string;
         nextAnalysis: number;
-        surveyRooms: {[roomName: string]: SurveyData};
+        surveyRooms: { [roomName: string]: SurveyData };
         dataComplete: boolean;
     };
 
@@ -43,7 +42,7 @@ export class SurveyAnalyzer {
         // place flag in chosen missionRoom
         if (Game.time < this.memory.nextAnalysis) { return; }
         if (this.memory.chosenRoom) {
-            let room = Game.rooms[this.memory.chosenRoom];
+            const room = Game.rooms[this.memory.chosenRoom];
             if (room) {
                 this.placeFlag(room);
                 delete this.memory.chosenRoom;
@@ -66,7 +65,7 @@ export class SurveyAnalyzer {
         if (exploreRoomName) return;
 
         let chosenRoom;
-        let readyList = this.checkReady();
+        const readyList = this.checkReady();
         if (readyList && Object.keys(readyList).length > 0) {
             chosenRoom = this.chooseRoom(readyList);
         }
@@ -79,57 +78,14 @@ export class SurveyAnalyzer {
 
     }
 
-    private initSurveyData(): {[roomName: string]: SurveyData} {
-        let data: {[roomName: string]: SurveyData} = {};
-
-        // find core
-        let roomCoords = WorldMap.getRoomCoordinates(this.room.name);
-        let coreX = "" + Math.floor(roomCoords.x / 10) + 5;
-        let coreY = "" + Math.floor(roomCoords.y / 10) + 5;
-        let nearestCore = roomCoords.xDir + coreX + roomCoords.yDir + coreY;
-        if (Game.map.getRoomLinearDistance(this.room.name, nearestCore) <= 2 &&
-            this.spawnGroup.averageAvailability > 1.5) {
-            data[nearestCore] = { danger: true };
-        }
-
-        let adjacentRoomNames = this.findAdjacentRooms(this.room.name, 1, [ROOMTYPE_ALLEY]);
-        for (let roomName of adjacentRoomNames) {
-
-            let noSafePath = false;
-            let roomsInPath = empire.traveler.findRoute(this.room.name, roomName,
-                { allowHostile: true, restrictDistance: 1 });
-            if (roomsInPath) {
-                for (let roomName in roomsInPath) {
-                    if (Traveler.checkOccupied(roomName)) {
-                        noSafePath = true;
-                    }
-                }
-            }
-            else {
-                noSafePath = true;
-            }
-
-            let type = WorldMap.roomTypeFromName(roomName);
-            if (type === ROOMTYPE_SOURCEKEEPER || noSafePath) {
-                data[roomName] = { danger: true };
-            }
-            else {
-                data[roomName] = { danger: false };
-            }
-        }
-
-        return data;
-    }
-
-
-    findAdjacentRooms(startRoomName: string, distance = 1, filterOut: number[] = []): string[] {
-        let alreadyChecked: {[roomName: string]: boolean } = { [startRoomName]: true };
-        let adjacentRooms: string[] = [];
-        let testRooms: string[] = [startRoomName];
+    public findAdjacentRooms(startRoomName: string, distance = 1, filterOut: number[] = []): string[] {
+        const alreadyChecked: { [roomName: string]: boolean } = {[startRoomName]: true};
+        const adjacentRooms: string[] = [];
+        const testRooms: string[] = [startRoomName];
         while (testRooms.length > 0) {
-            let testRoom = testRooms.pop();
+            const testRoom = testRooms.pop();
             alreadyChecked[testRoom] = true;
-            for (let value of _.values<string>(Game.map.describeExits(testRoom))) {
+            for (const value of _.values<string>(Game.map.describeExits(testRoom))) {
                 if (alreadyChecked[value]) continue;
                 if (Game.map.getRoomLinearDistance(startRoomName, value) > distance) continue;
                 if (_.includes(filterOut, WorldMap.roomTypeFromName(value))) continue;
@@ -141,12 +97,54 @@ export class SurveyAnalyzer {
         return adjacentRooms;
     }
 
-    private completeSurveyData(surveyRooms: {[roomName: string]: SurveyData}): string {
+    private initSurveyData(): { [roomName: string]: SurveyData } {
+        const data: { [roomName: string]: SurveyData } = {};
 
-        for (let roomName in surveyRooms) {
-            let data = surveyRooms[roomName];
+        // find core
+        const roomCoords = WorldMap.getRoomCoordinates(this.room.name);
+        const coreX = "" + Math.floor(roomCoords.x / 10) + 5;
+        const coreY = "" + Math.floor(roomCoords.y / 10) + 5;
+        const nearestCore = roomCoords.xDir + coreX + roomCoords.yDir + coreY;
+        if (Game.map.getRoomLinearDistance(this.room.name, nearestCore) <= 2 &&
+            this.spawnGroup.averageAvailability > 1.5) {
+            data[nearestCore] = {danger: true};
+        }
+
+        const adjacentRoomNames = this.findAdjacentRooms(this.room.name, 1, [ROOMTYPE_ALLEY]);
+        for (const roomName of adjacentRoomNames) {
+
+            let noSafePath = false;
+            const roomsInPath = empire.traveler.findRoute(this.room.name, roomName,
+                {allowHostile: true, restrictDistance: 1});
+            if (roomsInPath) {
+                for (const _roomName in roomsInPath) {
+                    if (Traveler.checkOccupied(_roomName)) {
+                        noSafePath = true;
+                    }
+                }
+            }
+            else {
+                noSafePath = true;
+            }
+
+            const type = WorldMap.roomTypeFromName(roomName);
+            if (type === ROOMTYPE_SOURCEKEEPER || noSafePath) {
+                data[roomName] = {danger: true};
+            }
+            else {
+                data[roomName] = {danger: false};
+            }
+        }
+
+        return data;
+    }
+
+    private completeSurveyData(surveyRooms: { [roomName: string]: SurveyData }): string {
+
+        for (const roomName in surveyRooms) {
+            const data = surveyRooms[roomName];
             if (data.sourceCount) continue;
-            let room = Game.rooms[roomName];
+            const room = Game.rooms[roomName];
             if (room) {
                 this.analyzeRoom(room, data);
                 continue;
@@ -177,31 +175,31 @@ export class SurveyAnalyzer {
         }
 
         // source info
-        let roomDistance = Game.map.getRoomLinearDistance(this.room.name, room.name);
-        let sources = room.find<Source>(FIND_SOURCES);
-        let roomType = WorldMap.roomTypeFromName(room.name);
-        let distances = [];
+        const roomDistance = Game.map.getRoomLinearDistance(this.room.name, room.name);
+        const sources = room.find<Source>(FIND_SOURCES);
+        // const roomType = WorldMap.roomTypeFromName(room.name);
+        const distances = [];
         data.sourceCount = sources.length;
-        for (let source of sources) {
-            let ret = PathFinder.search(this.room.storage.pos, { pos: source.pos, range: 1}, {
+        for (const source of sources) {
+            const ret = PathFinder.search(this.room.storage.pos, {pos: source.pos, range: 1}, {
                 swampCost: 1,
                 plainCost: 1,
                 roomCallback: (roomName: string) => {
                     if (Game.map.getRoomLinearDistance(this.room.name, roomName) > roomDistance) {
                         return false;
                     }
-                }
+                },
             });
             if (ret.incomplete) {
                 notifier.log(`SURVEY: Incomplete path from ${this.room.storage.pos} to ${source.pos}`);
             }
 
-            let distance = ret.path.length;
+            const distance = ret.path.length;
             distances.push(distance);
-            let cartsNeeded = Mission.analyzeTransport(distance, Mission.loadFromSource(source), 12900).cartsNeeded;
+            const cartsNeeded = Mission.analyzeTransport(distance, Mission.loadFromSource(source), 12900).cartsNeeded;
 
             // disqualify due to source distance
-            if (cartsNeeded > data.sourceCount){
+            if (cartsNeeded > data.sourceCount) {
                 notifier.log(`SURVEY: disqualified ${room.name} due to distance to source: ${cartsNeeded}`);
                 delete this.memory.surveyRooms[room.name];
                 return;
@@ -214,8 +212,8 @@ export class SurveyAnalyzer {
     }
 
     private checkOwnership(room: Room): string {
-        let flags = room.find<Flag>(FIND_FLAGS);
-        for (let flag of flags) {
+        const flags = room.find<Flag>(FIND_FLAGS);
+        for (const flag of flags) {
             if (flag.name.indexOf("mining") >= 0 || flag.name.indexOf("keeper") >= 0) {
                 return USERNAME;
             }
@@ -230,8 +228,8 @@ export class SurveyAnalyzer {
             }
         }
         else {
-            for (let source of room.find<Source>(FIND_SOURCES)) {
-                let nearbyCreeps = _.filter(source.pos.findInRange<Creep>(FIND_CREEPS, 1),
+            for (const source of room.find<Source>(FIND_SOURCES)) {
+                const nearbyCreeps = _.filter(source.pos.findInRange<Creep>(FIND_CREEPS, 1),
                     (c: Creep) => !c.owner || c.owner.username !== "Source Keeper");
                 if (nearbyCreeps.length === 0) { continue; }
                 return nearbyCreeps[0].owner.username;
@@ -241,11 +239,11 @@ export class SurveyAnalyzer {
 
     private updateOwnershipData(): string {
 
-        for (let roomName in this.memory.surveyRooms) {
-            let data = this.memory.surveyRooms[roomName];
+        for (const roomName in this.memory.surveyRooms) {
+            const data = this.memory.surveyRooms[roomName];
             // owner
             if (Game.time > data.lastCheckedOwner + 10000) {
-                let room = Game.rooms[roomName];
+                const room = Game.rooms[roomName];
                 if (room) {
                     data.owner = this.checkOwnership(room);
                     if (data.owner === USERNAME) {
@@ -262,7 +260,7 @@ export class SurveyAnalyzer {
         }
     }
 
-    private checkReady(): {[roomName: string]: SurveyData} {
+    private checkReady(): { [roomName: string]: SurveyData } {
 
         if (!empire.underCPULimit()) {
             notifier.log(`SURVEY: avoiding placement, cpu is over limit`);
@@ -270,14 +268,12 @@ export class SurveyAnalyzer {
             return;
         }
 
+        const readyList = {};
 
-
-        let readyList = {};
-
-        for (let roomName in this.memory.surveyRooms) {
-            let data = this.memory.surveyRooms[roomName];
+        for (const roomName in this.memory.surveyRooms) {
+            const data = this.memory.surveyRooms[roomName];
             // owner
-            if (!data.sourceCount ) { continue; }
+            if (!data.sourceCount) { continue; }
             // don't claim rooms if any nearby rooms with another owner
             if (data.owner) {
                 return;
@@ -293,13 +289,13 @@ export class SurveyAnalyzer {
         return readyList;
     }
 
-    private chooseRoom(readySurveyRooms: {[roomName: string]: SurveyData}): string {
+    private chooseRoom(readySurveyRooms: { [roomName: string]: SurveyData }): string {
 
         let bestScore = 0;
         let bestChoice;
-        for (let roomName in readySurveyRooms) {
-            let data = readySurveyRooms[roomName];
-            let score = data.sourceCount * 1000 - data.averageDistance;
+        for (const roomName in readySurveyRooms) {
+            const data = readySurveyRooms[roomName];
+            const score = data.sourceCount * 1000 - data.averageDistance;
             if (score > bestScore) {
                 bestChoice = roomName;
                 bestScore = score;
@@ -310,16 +306,16 @@ export class SurveyAnalyzer {
     }
 
     private placeFlag(room: Room) {
-        let direction = WorldMap.findRelativeRoomDir(this.room.name, room.name);
+        const direction = WorldMap.findRelativeRoomDir(this.room.name, room.name);
         let opName = this.opName.substr(0, this.opName.length - 1) + direction;
-        if (Game.map.getRoomLinearDistance(this.room.name, room.name ) > 1) {
+        if (Game.map.getRoomLinearDistance(this.room.name, room.name) > 1) {
             opName += direction;
         }
         let opType = "mining";
         if (room.roomType === ROOMTYPE_SOURCEKEEPER) {
             opType = "keeper";
         }
-        let flagName = `${opType}_${opName}`;
+        const flagName = `${opType}_${opName}`;
         helper.pathablePosition(room.name).createFlag(flagName, COLOR_GREY);
         notifier.log(`SURVEY: created new operation in ${room.name}: ${flagName}`);
         delete this.memory.surveyRooms[room.name];

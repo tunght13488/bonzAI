@@ -1,23 +1,24 @@
-import {Mission} from "./Mission";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
+
 export class ScoutMission extends Mission {
 
-    scouts: Agent[];
+    public scouts: Agent[];
 
     constructor(operation) {
         super(operation, "scout");
     }
 
-    initMission() {
+    public initMission() {
     }
 
-    roleCall() {
-        let maxScouts = () => this.hasVision ? 0 : 1;
+    public roleCall() {
+        const maxScouts = () => this.hasVision ? 0 : 1;
         this.scouts = this.headCount(this.name, () => this.workerBody(0, 0, 1), maxScouts, {blindSpawn: true});
     }
 
-    missionActions() {
-        for (let scout of this.scouts) {
+    public missionActions() {
+        for (const scout of this.scouts) {
 
             if (!scout.pos.isNearTo(this.flag)) {
                 scout.avoidSK(this.flag);
@@ -25,9 +26,9 @@ export class ScoutMission extends Mission {
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
     }
 }

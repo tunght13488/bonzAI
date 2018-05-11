@@ -1,21 +1,21 @@
 import {Empire} from "../ai/Empire";
-import {FortOperation} from "../ai/operations/FortOperation";
-import {Operation} from "../ai/operations/Operation";
-import {MiningOperation} from "../ai/operations/MiningOperation";
-import {KeeperOperation} from "../ai/operations/KeeperOperation";
-import {ConquestOperation} from "../ai/operations/ConquestOperation";
-import {consoleCommands} from "./consoleCommands";
-import {DemolishOperation} from "../ai/operations/DemolishOperation";
-import {TransportOperation} from "../ai/operations/TransportOperation";
-import {RaidOperation} from "../ai/operations/RaidOperation";
-import {QuadOperation} from "../ai/operations/QuadOperation";
 import {AutoOperation} from "../ai/operations/AutoOperation";
+import {ConquestOperation} from "../ai/operations/ConquestOperation";
+import {DemolishOperation} from "../ai/operations/DemolishOperation";
 import {FlexOperation} from "../ai/operations/FlexOperation";
-import {notifier} from "../notifier";
-import {helper} from "./helper";
+import {FortOperation} from "../ai/operations/FortOperation";
+import {KeeperOperation} from "../ai/operations/KeeperOperation";
+import {MiningOperation} from "../ai/operations/MiningOperation";
+import {Operation} from "../ai/operations/Operation";
+import {QuadOperation} from "../ai/operations/QuadOperation";
+import {RaidOperation} from "../ai/operations/RaidOperation";
+import {TransportOperation} from "../ai/operations/TransportOperation";
 import {ZombieOperation} from "../ai/operations/ZombieOperation";
-import {CACHE_INVALIDATION_FREQUENCY, CACHE_INVALIDATION_PERIOD} from "../config/constants";
 import {MINERALS_RAW, PRODUCT_LIST, RESERVE_AMOUNT} from "../ai/TradeNetwork";
+import {CACHE_INVALIDATION_FREQUENCY, CACHE_INVALIDATION_PERIOD} from "../config/constants";
+import {notifier} from "../notifier";
+import {consoleCommands} from "./consoleCommands";
+import {helper} from "./helper";
 
 const OPERATION_CLASSES = {
     conquest: ConquestOperation,
@@ -31,38 +31,38 @@ const OPERATION_CLASSES = {
     zombie: ZombieOperation,
 };
 
-export var empire: Empire;
+export let empire: Empire;
 
-export var loopHelper = {
+export let loopHelper = {
 
-    initEmpire: function() {
+    initEmpire() {
         empire = new Empire();
         global.emp = empire;
         empire.init();
     },
 
-    getOperations: function(empire: Empire): Operation[] {
+    getOperations(_empire: Empire): Operation[] {
 
         // gather flag data, instantiate operations
-        let operationList: {[operationName: string]: Operation} = {};
-        for (let flagName in Game.flags) {
-            for (let typeName in OPERATION_CLASSES) {
+        const operationList: { [operationName: string]: Operation } = {};
+        for (const flagName in Game.flags) {
+            for (const typeName in OPERATION_CLASSES) {
                 if (!OPERATION_CLASSES.hasOwnProperty(typeName)) continue;
                 if (flagName.substring(0, typeName.length) === typeName) {
-                    let operationClass = OPERATION_CLASSES[typeName];
-                    let flag = Game.flags[flagName];
-                    let name = flagName.substring(flagName.indexOf("_") + 1);
+                    const operationClass = OPERATION_CLASSES[typeName];
+                    const flag = Game.flags[flagName];
+                    const name = flagName.substring(flagName.indexOf("_") + 1);
 
                     if (operationList.hasOwnProperty(name)) {
-                        console.log(`operation with name ${name} already exists (type: ${operationList[name].type}), please use a different name`);
+                        console.log(`operation with name ${name} already exists (type: ${operationList[name].type}),` +
+                            `please use a different name`);
                         continue;
                     }
 
                     let operation;
                     try {
-                        operation = new operationClass(flag, name, typeName, empire);
-                    }
-                    catch (e) {
+                        operation = new operationClass(flag, name, typeName, _empire);
+                    } catch (e) {
                         console.log("error parsing flag name and bootstrapping operation");
                         console.log(e);
                     }
@@ -78,7 +78,7 @@ export var loopHelper = {
         return _.sortBy(operationList, (operation: Operation) => operation.priority);
     },
 
-    initMemory: function() {
+    initMemory: () => {
         _.defaultsDeep(Memory, {
             stats: {},
             temp: {},
@@ -97,20 +97,27 @@ export var loopHelper = {
                 history: [],
                 average: Game.cpu.getUsed(),
             },
-            hostileMemory: {}
+            hostileMemory: {},
         });
     },
 
-    scavangeResources: function() {
-        for (let v in Game.rooms) {
-            let room = Game.rooms[v];
-            let resources = room.find(FIND_DROPPED_ENERGY) as Resource[];
-            for (let resource of resources) {
+    scavangeResources() {
+        for (const v in Game.rooms) {
+            const room = Game.rooms[v];
+            const resources = room.find(FIND_DROPPED_RESOURCES) as Resource[];
+            for (const resource of resources) {
                 if (resource.amount > 10) {
-                    let creep = resource.pos.lookFor(LOOK_CREEPS)[0] as Creep;
-                    if (creep && creep.my && creep.memory.scavanger === resource.resourceType
-                        && (!creep.carry[resource.resourceType] || creep.carry[resource.resourceType] < creep.carryCapacity)) {
-                        let outcome = creep.pickup(resource);
+                    const creep = resource.pos.lookFor(LOOK_CREEPS)[0] as Creep;
+                    if (creep &&
+                        creep.my &&
+                        creep.memory.scavanger ===
+                        resource.resourceType
+                        &&
+                        (!creep.carry[resource.resourceType] ||
+                            creep.carry[resource.resourceType] <
+                            creep.carryCapacity)) {
+                        // const outcome = creep.pickup(resource);
+                        creep.pickup(resource);
                     }
                 }
             }
@@ -119,40 +126,40 @@ export var loopHelper = {
 
     invalidateCache: Game.time % CACHE_INVALIDATION_FREQUENCY < CACHE_INVALIDATION_PERIOD,
 
-    grafanaStats: function(empire: Empire) {
+    grafanaStats(_empire: Empire) {
 
         if (!Memory.playerConfig.enableStats) return;
 
         if (!Memory.stats) Memory.stats = {};
 
         // STATS START HERE
-        _.forEach(Game.rooms, function (room) {
+        _.forEach(Game.rooms, room => {
             if (room.controller && room.controller.my) {
                 Memory.stats["rooms." + room.name + ".energyAvailable"] = room.energyAvailable;
             }
         });
 
-        for (let resourceType of MINERALS_RAW) {
-            Memory.stats["empire.rawMinerals." + resourceType] = empire.network.inventory[resourceType];
+        for (const resourceType of MINERALS_RAW) {
+            Memory.stats["empire.rawMinerals." + resourceType] = _empire.network.inventory[resourceType];
             Memory.stats["empire.mineralCount." + resourceType] = Game.cache[resourceType] || 0;
         }
 
-        for (let resourceType of PRODUCT_LIST) {
-            Memory.stats["empire.compounds." + resourceType] = empire.network.inventory[resourceType];
+        for (const resourceType of PRODUCT_LIST) {
+            Memory.stats["empire.compounds." + resourceType] = _empire.network.inventory[resourceType];
             Memory.stats["empire.processCount." + resourceType] = Game.cache.labProcesses[resourceType] || 0;
         }
 
         Memory.stats["empire.activeLabCount"] = Game.cache.activeLabCount;
 
-        Memory.stats["empire.energy"] = empire.network.inventory[RESOURCE_ENERGY];
+        Memory.stats["empire.energy"] = _empire.network.inventory[RESOURCE_ENERGY];
 
-        for (let storage of empire.network.storages) {
+        for (const storage of _empire.network.storages) {
             Memory.stats["empire.power." + storage.room.name] = storage.store.power ? storage.store.power : 0;
         }
 
         // Profiler check
-        for (let identifier in Memory.profiler) {
-            let profile = Memory.profiler[identifier];
+        for (const identifier in Memory.profiler) {
+            const profile = Memory.profiler[identifier];
             Memory.stats["game.prof." + identifier + ".cpt"] = profile.costPerTick;
             Memory.stats["game.prof." + identifier + ".cpc"] = profile.costPerCall;
         }
@@ -168,12 +175,12 @@ export var loopHelper = {
         Memory.stats["game.cpu.perCreep"] = Game.cpu.getUsed() / Object.keys(Game.creeps).length;
     },
 
-    sendResourceOrder: function(empire: Empire) {
+    sendResourceOrder(_empire: Empire) {
         if (!Memory.resourceOrder) {
             Memory.resourceOrder = {};
         }
-        for (let timeStamp in Memory.resourceOrder) {
-            let order = Memory.resourceOrder[timeStamp];
+        for (const timeStamp in Memory.resourceOrder) {
+            const order = Memory.resourceOrder[timeStamp];
             if (!order || order.roomName === undefined || order.amount === undefined) {
                 console.log("problem with order:", JSON.stringify(order));
                 return;
@@ -182,19 +189,19 @@ export var loopHelper = {
                 order.amountSent = 0;
             }
 
-            let sortedTerminals = _.sortBy(empire.network.terminals, (t: StructureTerminal) =>
+            const sortedTerminals = _.sortBy(_empire.network.terminals, (t: StructureTerminal) =>
                 Game.map.getRoomLinearDistance(order.roomName, t.room.name)) as StructureTerminal[];
 
             let count = 0;
-            for (let terminal of sortedTerminals) {
+            for (const terminal of sortedTerminals) {
                 if (terminal.room.name === order.roomName) continue;
                 if (terminal.store[order.resourceType] >= RESERVE_AMOUNT) {
-                    let amount = Math.min(1000, order.amount - order.amountSent);
+                    const amount = Math.min(1000, order.amount - order.amountSent);
                     if (amount <= 0) {
                         break;
                     }
-                    let msg = order.resourceType + " delivery: " + (order.amountSent + amount) + "/" + order.amount;
-                    let outcome = terminal.send(order.resourceType, amount, order.roomName, msg);
+                    const msg = order.resourceType + " delivery: " + (order.amountSent + amount) + "/" + order.amount;
+                    const outcome = terminal.send(order.resourceType, amount, order.roomName, msg);
                     if (outcome === OK) {
                         order.amountSent += amount;
                         console.log(msg);
@@ -212,7 +219,7 @@ export var loopHelper = {
         }
     },
 
-    initConsoleCommands: function() {
+    initConsoleCommands() {
         // command functions found in consoleCommands.ts can be executed from the game console
         // example: cc.minv()
         global.cc = consoleCommands;
@@ -220,15 +227,15 @@ export var loopHelper = {
         global.helper = helper;
     },
 
-    garbageCollection: function() {
+    garbageCollection() {
 
         if (Game.time < Memory.nextGC) { return; }
 
-        for (let id in Memory.hostileMemory) {
-            let creep = Game.getObjectById<Creep>(id);
+        for (const id in Memory.hostileMemory) {
+            const creep = Game.getObjectById<Creep>(id);
             if (!creep) { delete Memory.hostileMemory[id]; }
         }
 
         Memory.nextGC = Game.time += helper.randomInterval(100);
-    }
+    },
 };

@@ -3,8 +3,8 @@ declare var global: any;
 
 interface Game {
     cache: {
-        structures: { [roomName: string]: {[structureType: string]: Structure[]} },
-        hostiles:  { [roomName: string]: Creep[] },
+        structures: { [roomName: string]: { [structureType: string]: Structure[] } },
+        hostiles: { [roomName: string]: Creep[] },
         hostilesAndLairs: { [roomName: string]: RoomObject[] }
         lairThreats: { [roomName: string]: StructureKeeperLair[] }
         fleeObjects: { [roomName: string]: RoomObject[] }
@@ -13,23 +13,26 @@ interface Game {
         activeLabCount: number;
         placedRoad: boolean;
     };
-    operations: {[opName: string]: any }
+    operations: { [opName: string]: any };
 }
 
 interface Room {
     basicMatrix: CostMatrix;
-    findStructures<T>(structureType: string): T[];
-    findStructures<T>(structureType: string): Structure[];
-    getAltBattery(roomObject?: RoomObject): StructureContainer | Creep;
     hostiles: Creep[];
     hostilesAndLairs: RoomObject[];
-    fleeObjects: (Creep|Structure)[];
+    fleeObjects: Array<Creep | Structure>;
     coords: RoomCoord;
     roomType: number;
     _defaultMatrix: CostMatrix;
     defaultMatrix: CostMatrix;
-    structures: {[structureType: string]: Structure[] }
+    structures: { [structureType: string]: Structure[] };
     memory: RoomMemory;
+
+    findStructures<T>(structureType: string): T[];
+
+    findStructures<T>(structureType: string): Structure[];
+
+    getAltBattery(roomObject?: RoomObject): StructureContainer | Creep;
 }
 
 interface RoomMemory {
@@ -40,9 +43,9 @@ interface RoomMemory {
     nextTrade: number;
     nextScan: number;
     nextRadar: number;
-    radarData: { x: number, y: number }
+    radarData: { x: number, y: number };
     spawnMemory: any;
-    boostRequests: {[boostType: string]: {flagName: string, requesterIds: string[]} };
+    boostRequests: { [boostType: string]: { flagName: string, requesterIds: string[] } };
     controllerBatteryId: string;
     upgraderPositions: RoomPosition[];
 }
@@ -56,11 +59,17 @@ interface RoomCoord {
 
 interface RoomPosition {
     getFleeOptions(roomObject: RoomObject): RoomPosition[];
+
     bestFleePosition(roomObject: RoomObject): RoomPosition;
+
     openAdjacentSpots(ignoreCreeps?: boolean): RoomPosition[];
+
     getPositionAtDirection(direction: number, range?: number): RoomPosition;
-    isPassible(ignoreCreeps?: boolean): boolean;
+
+    isPassable(ignoreCreeps?: boolean): boolean;
+
     lookForStructure(structureType: string): Structure;
+
     isNearExit(range: number): boolean;
 }
 
@@ -70,7 +79,8 @@ interface RoomObject {
 
 interface Creep {
     partCount(partType: string): number;
-    blindMoveTo(destination: {pos: RoomPosition}, ops?: any, dareDevil?: boolean): number;
+
+    blindMoveTo(destination: { pos: RoomPosition }, ops?: any, dareDevil?: boolean): number;
 }
 
 interface CreepMemory {
@@ -82,10 +92,10 @@ interface CreepMemory {
 interface Memory {
     // we can add any properties we intend to use here, instead of making Memory of type any
     temp: any;
-    strangerDanger: {[username: string]: StrangerReport[] };
+    strangerDanger: { [username: string]: StrangerReport[] };
     stats: any;
-    traders: {[username: string]: { [resourceType: string]: number; }};
-    resourceOrder: {[time: number]: ResourceOrder};
+    traders: { [username: string]: { [resourceType: string]: number; } };
+    resourceOrder: { [time: number]: ResourceOrder };
     playerConfig: {
         terminalNetworkRange: number;
         enableStats: boolean;
@@ -94,30 +104,30 @@ interface Memory {
         powerMinimum: number;
     };
     empire: any;
-    profiler: {[identifier: string]: ProfilerData };
-    notifier: {
+    profiler: { [identifier: string]: ProfilerData };
+    notifier: Array<{
         time: number,
         earthTime: number,
         message: string,
-    }[];
+    }>;
     roomAttacks: any;
-    powerObservers: {[scanningRoomName: string]: {[roomName: string]: number}};
+    powerObservers: { [scanningRoomName: string]: { [roomName: string]: number } };
     cpu: {
         history: number[];
         average: number;
     };
-    rooms: {[roomName: string]: RoomMemory };
-    hostileMemory: {[id: string]: HostileMemory };
+    rooms: { [roomName: string]: RoomMemory };
+    hostileMemory: { [id: string]: HostileMemory };
     nextGC: number;
     timeoutTracker: {
         operation: string;
         mission: string;
         phase: string;
-    }
+    };
 }
 
 interface HostileMemory {
-    potentials: {[partType: string]: number}
+    potentials: { [partType: string]: number };
 }
 
 interface ProfilerData {
@@ -148,6 +158,7 @@ interface StrangerReport {
 
 interface StructureController {
     getBattery(structureType?: string): StructureLink | StructureStorage | StructureContainer;
+
     getUpgraderPositions(): RoomPosition[];
 }
 
@@ -157,22 +168,26 @@ interface StructureKeeperLair {
 
 interface StructureObserver {
     observation: Observation;
+
     _observeRoom(roomName: string): number;
+
     observeRoom(roomName: string, purpose?: string, override?: boolean): number;
 }
 
 interface Observation {
-    purpose: string,
-    roomName: string,
-    room?: Room,
+    purpose: string;
+    roomName: string;
+    room?: Room;
 }
 
 interface StructureTerminal {
     _send(resourceType: string, amount: number, roomName: string, description?: string): number;
+
     send(resourceType: string, amount: number, roomName: string, description?: string): number;
 }
 
 interface StructureTower {
     alreadyFired: boolean;
+
     _repair(target: Structure | Spawn): number;
 }

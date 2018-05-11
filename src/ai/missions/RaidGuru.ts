@@ -1,20 +1,21 @@
-import {Guru} from "./Guru";
-import {RaidData, RaidCache} from "../../interfaces";
-import {SpawnGroup} from "../SpawnGroup";
 import {helper} from "../../helpers/helper";
-import {notifier} from "../../notifier";
 import {empire} from "../../helpers/loopHelper";
+import {RaidCache} from "../../interfaces";
+import {notifier} from "../../notifier";
+import {Operation} from "../operations/Operation";
+import {SpawnGroup} from "../SpawnGroup";
 import {Traveler} from "../Traveler";
 import {WorldMap} from "../WorldMap";
-import {Operation} from "../operations/Operation";
+import {Guru} from "./Guru";
+
 export class RaidGuru extends Guru {
 
-    raidRoom: Room;
-    raidRoomName: string;
-    raidCreeps: Creep[] = [];
-    injuredCreeps: Creep[] = [];
-    cache: RaidCache;
-    spawnGroup: SpawnGroup;
+    public raidRoom: Room;
+    public raidRoomName: string;
+    public raidCreeps: Creep[] = [];
+    public injuredCreeps: Creep[] = [];
+    public cache: RaidCache;
+    public spawnGroup: SpawnGroup;
 
     constructor(operation: Operation) {
         super(operation, "raidGuru");
@@ -26,13 +27,18 @@ export class RaidGuru extends Guru {
     }
 
     get isInitiaized(): boolean { return this.cache !== undefined; }
+
     get fallbackPos(): RoomPosition { if (this.cache) { return helper.deserializeRoomPosition(this.cache.fallbackPos); } }
+
     get expectedDamage(): number { if (this.cache) { return this.cache.expectedDamage; }}
+
     get avgWallHits(): number { if (this.cache) { return this.cache.avgWallHits; }}
-    get matrix(): CostMatrix { if (this.cache) return PathFinder.CostMatrix.deserialize(this.cache.matrix)}
+
+    get matrix(): CostMatrix { if (this.cache) return PathFinder.CostMatrix.deserialize(this.cache.matrix); }
+
     get startTime(): number { return this.memory.startTime; }
 
-    init(roomName: string, safeEntrance: boolean): boolean {
+    public init(roomName: string, safeEntrance: boolean): boolean {
         this.raidRoomName = roomName;
         this.raidRoom = Game.rooms[roomName];
         this.cache = this.memory.cache;
@@ -49,17 +55,17 @@ export class RaidGuru extends Guru {
     }
 
     private generateCache(roomName: string, safeEntrance: boolean): RaidCache {
-        let room = this.observeRoom(roomName);
+        const room = this.observeRoom(roomName);
         if (!room) return;
 
-        let cache = {} as RaidCache;
+        const cache = {} as RaidCache;
 
-        let walls = this.room.findStructures<Structure>(STRUCTURE_WALL)
+        const walls = this.room.findStructures<Structure>(STRUCTURE_WALL)
             .concat(this.room.findStructures<Structure>(STRUCTURE_RAMPART));
-        let towers = this.room.findStructures<StructureTower>(STRUCTURE_TOWER);
-        let spawns = this.room.findStructures<StructureSpawn>(STRUCTURE_SPAWN);
+        const towers = this.room.findStructures<StructureTower>(STRUCTURE_TOWER);
+        const spawns = this.room.findStructures<StructureSpawn>(STRUCTURE_SPAWN);
 
-        let matrix = this.initMatrix(walls);
+        const matrix = this.initMatrix(walls);
         if (safeEntrance) {
             cache.bestExit = this.findBestExit(matrix, towers, spawns);
         }
@@ -74,11 +80,11 @@ export class RaidGuru extends Guru {
     }
 
     private initMatrix(walls: Structure[]): CostMatrix {
-        let matrix = new PathFinder.CostMatrix();
+        const matrix = new PathFinder.CostMatrix();
         if (walls.length > 0) {
-            let highestHits = _(walls).sortBy("hits").last().hits;
-            for (let wall of walls) {
-                matrix.set(wall.pos.x, wall.pos.y, Math.ceil(wall.hits * 10 / highestHits) * 10)
+            const highestHits = _(walls).sortBy("hits").last().hits;
+            for (const wall of walls) {
+                matrix.set(wall.pos.x, wall.pos.y, Math.ceil(wall.hits * 10 / highestHits) * 10);
             }
         }
 
@@ -88,23 +94,23 @@ export class RaidGuru extends Guru {
     private findBestExit(matrix: CostMatrix, towers: StructureTower[], spawns: StructureSpawn[]): RoomPosition {
 
         let bestExit;
-        let ret = PathFinder.search(this.spawnGroup.pos, {pos: spawns[0].pos, range: 1}, {
+        const ret = PathFinder.search(this.spawnGroup.pos, {pos: spawns[0].pos, range: 1}, {
             roomCallback: (roomName: string): CostMatrix | boolean => {
                 if (roomName !== this.room.name && Traveler.checkOccupied(roomName)) { return false; }
-                let room = Game.rooms[roomName];
+                const room = Game.rooms[roomName];
                 if (room) { return room.defaultMatrix; }
-            }
+            },
         });
         if (!ret.incomplete) {
             bestExit = _.find(ret.path, (p: RoomPosition) => p.roomName === this.room.name);
         }
 
-        let allowedExits = {};
+        const allowedExits = {};
         if (!bestExit) {
-            let exitData = Game.map.describeExits(this.room.name);
-            for (let direction in exitData) {
-                let roomName = exitData[direction];
-                let allowedRooms = empire.traveler.findRoute(this.spawnGroup.pos.roomName, roomName);
+            const exitData = Game.map.describeExits(this.room.name);
+            for (const direction in exitData) {
+                const roomName = exitData[direction];
+                const allowedRooms = empire.traveler.findRoute(this.spawnGroup.pos.roomName, roomName);
                 if (allowedRooms && Object.keys(allowedRooms).length <= 8) {
                     allowedExits[direction] = true;
                 }
@@ -115,8 +121,8 @@ export class RaidGuru extends Guru {
             }
         }
 
-        let exitPositions: RoomPosition[] = [];
-        for (let x = 0; x < 50; x ++) {
+        const exitPositions: RoomPosition[] = [];
+        for (let x = 0; x < 50; x++) {
             for (let y = 0; y < 50; y++) {
                 if (x !== 0 && y !== 0 && x !== 49 && y !== 49) { continue; }
                 if (Game.map.getTerrainAt(x, y, this.room.name) === "wall") { continue; }
@@ -151,18 +157,18 @@ export class RaidGuru extends Guru {
 
         if (bestExit) {
             let expectedDamage = 0;
-            for (let tower of towers) {
-                let range = bestExit.getRangeTo(tower);
+            for (const tower of towers) {
+                const range = bestExit.getRangeTo(tower);
                 expectedDamage += helper.towerDamageAtRange(range);
             }
             return expectedDamage / 2;
         }
         else {
             let mostExpectedDamage = 0;
-            for (let attackedTower of towers) {
+            for (const attackedTower of towers) {
                 let expectedDamage = 0;
-                for (let otherTower of towers) {
-                    let range = attackedTower.pos.getRangeTo(otherTower);
+                for (const otherTower of towers) {
+                    const range = attackedTower.pos.getRangeTo(otherTower);
                     expectedDamage += helper.towerDamageAtRange(range);
                 }
                 if (expectedDamage > mostExpectedDamage) {
@@ -180,7 +186,7 @@ export class RaidGuru extends Guru {
 
     private findFallback(room: Room, bestExit?: RoomPosition): RoomPosition {
         if (bestExit) {
-            let fallback = _.clone(bestExit);
+            const fallback = _.clone(bestExit);
             if (fallback.x === 0) {
                 fallback.x = 48;
                 fallback.roomName = WorldMap.findRelativeRoomName(fallback.roomName, -1, 0);

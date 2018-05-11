@@ -1,16 +1,17 @@
-import {Mission} from "./Mission";
-import {Operation} from "../operations/Operation";
 import {helper} from "../../helpers/helper";
+import {Operation} from "../operations/Operation";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
+
 export class TransportMission extends Mission {
 
-    carts: Agent[];
-    maxCarts: number;
-    origin: StructureContainer | StructureStorage | StructureTerminal;
-    destination: StructureContainer | StructureStorage | StructureTerminal;
-    resourceType: string;
-    offroad: boolean;
-    waypoints: Flag[];
+    public carts: Agent[];
+    public maxCarts: number;
+    public origin: StructureContainer | StructureStorage | StructureTerminal;
+    public destination: StructureContainer | StructureStorage | StructureTerminal;
+    public resourceType: string;
+    public offroad: boolean;
+    public waypoints: Flag[];
 
     constructor(operation: Operation, maxCarts: number,
                 origin?: StructureContainer | StructureStorage | StructureTerminal,
@@ -30,10 +31,10 @@ export class TransportMission extends Mission {
         this.offroad = offroad;
     }
 
-    initMission() {
+    public initMission() {
         this.waypoints = [];
         if (!this.origin) {
-            let originFlag = Game.flags[this.operation.name + "_origin"];
+            const originFlag = Game.flags[this.operation.name + "_origin"];
             if (originFlag) {
                 this.memory.originPos = originFlag.pos;
                 if (originFlag.room) {
@@ -42,7 +43,7 @@ export class TransportMission extends Mission {
             }
         }
         if (!this.destination) {
-            let destinationFlag = Game.flags[this.operation.name + "_destination"];
+            const destinationFlag = Game.flags[this.operation.name + "_destination"];
             if (destinationFlag) {
                 this.memory.destinationPos = destinationFlag.pos;
                 if (destinationFlag.room) {
@@ -54,9 +55,9 @@ export class TransportMission extends Mission {
         this.waypoints = this.getFlagSet("_waypoints_", 1);
     }
 
-    roleCall() {
+    public roleCall() {
 
-        let body = () => {
+        const body = () => {
             if (this.offroad) {
                 return this.bodyRatio(0, 1, 1, 1);
             }
@@ -65,13 +66,13 @@ export class TransportMission extends Mission {
             }
         };
 
-        let memory = { scavanger: this.resourceType, prep: true };
-        this.carts = this.headCount("cart", body, ()=> this.maxCarts, {memory: memory});
+        const memory = {scavanger: this.resourceType, prep: true};
+        this.carts = this.headCount("cart", body, () => this.maxCarts, {memory});
     }
 
-    missionActions() {
+    public missionActions() {
 
-        for (let cart of this.carts) {
+        for (const cart of this.carts) {
             if (!this.memory.originPos || !this.memory.destinationPos) {
                 cart.idleNear(this.flag);
             }
@@ -80,18 +81,18 @@ export class TransportMission extends Mission {
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
     }
 
     private cartActions(cart: Agent) {
 
-        let hasLoad = cart.hasLoad();
+        const hasLoad = cart.hasLoad();
         if (!hasLoad) {
             if (!this.origin) {
-                let originPos = helper.deserializeRoomPosition(this.memory.originPos);
+                const originPos = helper.deserializeRoomPosition(this.memory.originPos);
                 cart.travelTo(originPos);
             }
             else if (!cart.pos.isNearTo(this.origin)) {
@@ -117,7 +118,7 @@ export class TransportMission extends Mission {
 
         // hasLoad = true
         if (!this.destination) {
-            let destinationPos = helper.deserializeRoomPosition(this.memory.destinationPos);
+            const destinationPos = helper.deserializeRoomPosition(this.memory.destinationPos);
             cart.travelTo(destinationPos);
         }
         else if (!cart.pos.isNearTo(this.destination)) {
@@ -137,4 +138,3 @@ export class TransportMission extends Mission {
         }
     }
 }
-

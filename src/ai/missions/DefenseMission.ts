@@ -1,30 +1,31 @@
-import {Mission} from "./Mission";
 import {Operation} from "../operations/Operation";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
+
 export class DefenseMission extends Mission {
 
-    refillCarts: Agent[];
-    defenders: Agent[];
+    public refillCarts: Agent[];
+    public defenders: Agent[];
 
-    towers: StructureTower[];
-    empties: StructureTower[];
-    closestHostile: Creep;
-    healedDefender: Agent;
+    public towers: StructureTower[];
+    public empties: StructureTower[];
+    public closestHostile: Creep;
+    public healedDefender: Agent;
 
-    playerThreat: boolean;
-    attackedCreep: Creep;
-    enhancedBoost: boolean;
-    likelyTowerDrainAttempt: boolean;
+    public playerThreat: boolean;
+    public attackedCreep: Creep;
+    public enhancedBoost: boolean;
+    public likelyTowerDrainAttempt: boolean;
 
-    healers: Creep[] = [];
-    attackers: Creep[] = [];
+    public healers: Creep[] = [];
+    public attackers: Creep[] = [];
 
-    wallRamparts: Structure[];
-    jonRamparts: Structure[];
+    public wallRamparts: Structure[];
+    public jonRamparts: Structure[];
 
-    enemySquads = [];
+    public enemySquads = [];
 
-    memory: {
+    public memory: {
         idlePosition: RoomPosition;
         unleash: boolean;
         disableSafeMode: boolean;
@@ -38,15 +39,15 @@ export class DefenseMission extends Mission {
         super(operation, "defense");
     }
 
-    initMission() {
+    public initMission() {
         this.towers = this.room.findStructures<StructureTower>(STRUCTURE_TOWER);
 
         this.analyzePlayerThreat();
 
         // nuke detection
         if (Game.time % 1000 === 1) {
-            let nukes = this.room.find(FIND_NUKES) as Nuke[];
-            for (let nuke of nukes) {
+            const nukes = this.room.find(FIND_NUKES) as Nuke[];
+            for (const nuke of nukes) {
                 console.log(`DEFENSE: nuke landing at ${this.operation.name} in ${nuke.timeToLand}`);
             }
         }
@@ -55,60 +56,67 @@ export class DefenseMission extends Mission {
         this.triggerSafeMode();
     }
 
-    getMaxDefenders = () => this.playerThreat ? Math.max(this.enemySquads.length, 1) : 0;
-    getMaxRefillers = () => this.playerThreat ? 1 : 0;
+    public getMaxDefenders = () => this.playerThreat ? Math.max(this.enemySquads.length, 1) : 0;
+    public getMaxRefillers = () => this.playerThreat ? 1 : 0;
 
-    defenderBody = () => {
+    public defenderBody = () => {
         if (this.enhancedBoost) {
-            let bodyUnit = this.configBody({[TOUGH]: 1, [ATTACK]: 3, [MOVE]: 1});
-            let maxUnits = Math.min(this.spawnGroup.maxUnits(bodyUnit), 8);
-            return this.configBody({[TOUGH]: maxUnits, [ATTACK]: maxUnits * 3, [RANGED_ATTACK]: 1, [MOVE]: maxUnits + 1});
+            const bodyUnit = this.configBody({[TOUGH]: 1, [ATTACK]: 3, [MOVE]: 1});
+            const maxUnits = Math.min(this.spawnGroup.maxUnits(bodyUnit), 8);
+            return this.configBody({
+                [TOUGH]: maxUnits,
+                [ATTACK]: maxUnits * 3,
+                [RANGED_ATTACK]: 1,
+                [MOVE]: maxUnits + 1,
+            });
         }
         else {
-            let bodyUnit = this.configBody({[TOUGH]: 1, [ATTACK]: 5, [MOVE]: 6});
-            let maxUnits = Math.min(this.spawnGroup.maxUnits(bodyUnit), 4);
+            const bodyUnit = this.configBody({[TOUGH]: 1, [ATTACK]: 5, [MOVE]: 6});
+            const maxUnits = Math.min(this.spawnGroup.maxUnits(bodyUnit), 4);
             return this.configBody({[TOUGH]: maxUnits, [ATTACK]: maxUnits * 5, [MOVE]: maxUnits * 6});
         }
     };
 
-    roleCall() {
+    public roleCall() {
 
         this.refillCarts = this.headCount("towerCart", () => this.bodyRatio(0, 2, 1, 1, 4), this.getMaxRefillers);
 
-        let memory = { boosts: [RESOURCE_CATALYZED_KEANIUM_ALKALIDE, RESOURCE_CATALYZED_GHODIUM_ALKALIDE,
-            RESOURCE_CATALYZED_UTRIUM_ACID], allowUnboosted: !this.enhancedBoost };
+        const memory = {
+            boosts: [RESOURCE_CATALYZED_KEANIUM_ALKALIDE, RESOURCE_CATALYZED_GHODIUM_ALKALIDE,
+                RESOURCE_CATALYZED_UTRIUM_ACID], allowUnboosted: !this.enhancedBoost,
+        };
 
         if (this.enhancedBoost) {
             memory.boosts.push(RESOURCE_CATALYZED_ZYNTHIUM_ALKALIDE);
         }
 
-        this.defenders = this.headCount("defender", this.defenderBody, this.getMaxDefenders, {prespawn: 1, memory: memory});
+        this.defenders = this.headCount("defender", this.defenderBody, this.getMaxDefenders, {prespawn: 1, memory});
     }
 
-    missionActions() {
+    public missionActions() {
 
         let order = 0;
-        for (let defender of this.defenders) {
+        for (const defender of this.defenders) {
             this.defenderActions(defender, order);
             order++;
         }
 
         this.towerTargeting(this.towers);
 
-        for (let cart of this.refillCarts) {
+        for (const cart of this.refillCarts) {
             this.towerCartActions(cart);
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
     }
 
-    towerCartActions(cart: Agent) {
+    public towerCartActions(cart: Agent) {
 
-        let hasLoad = cart.hasLoad();
+        const hasLoad = cart.hasLoad();
         if (!hasLoad) {
             cart.procureEnergy(this.findLowestEmpty(cart), true);
             return;
@@ -128,7 +136,7 @@ export class DefenseMission extends Mission {
         }
 
         // is near to target
-        let outcome = cart.transfer(target, RESOURCE_ENERGY);
+        const outcome = cart.transfer(target, RESOURCE_ENERGY);
         if (outcome === OK && cart.carry.energy >= target.energyCapacity) {
             target = this.findLowestEmpty(cart, target);
             if (target && !cart.pos.isNearTo(target)) {
@@ -137,7 +145,7 @@ export class DefenseMission extends Mission {
         }
     }
 
-    findLowestEmpty(cart: Agent, pullTarget?: StructureTower): StructureTower {
+    public findLowestEmpty(cart: Agent, pullTarget?: StructureTower): StructureTower {
         if (!this.empties) {
             this.empties = _(this.towers)
                 .filter((s: StructureTower) => s.energy < s.energyCapacity)
@@ -160,21 +168,22 @@ export class DefenseMission extends Mission {
         }
 
         // movement
-        let dangerZone = false;
+        // const dangerZone = false;
         if (this.memory.unleash) {
-            let closest = defender.pos.findClosestByRange(this.room.hostiles);
+            const closest = defender.pos.findClosestByRange(this.room.hostiles);
             if (defender.pos.isNearTo(closest)) {
                 if (defender.attack(closest) === OK) {
                     this.attackedCreep = closest;
                 }
             }
             else {
-                let outcome = defender.travelTo(closest);
+                // const outcome = defender.travelTo(closest);
+                defender.travelTo(closest);
             }
         }
         else {
 
-            let target = defender.pos.findClosestByRange(this.enemySquads[order % this.enemySquads.length]) as Creep;
+            const target = defender.pos.findClosestByRange(this.enemySquads[order % this.enemySquads.length]) as Creep;
             if (!target) {
                 console.log("no target");
                 return;
@@ -182,12 +191,12 @@ export class DefenseMission extends Mission {
 
             let closestRampart = target.pos.findClosestByRange(this.jonRamparts) as Structure;
             if (closestRampart) {
-                let currentRampart = defender.pos.lookForStructure(STRUCTURE_RAMPART) as Structure;
+                const currentRampart = defender.pos.lookForStructure(STRUCTURE_RAMPART) as Structure;
                 if (currentRampart && currentRampart.pos.getRangeTo(target) <= closestRampart.pos.getRangeTo(target)) {
                     closestRampart = currentRampart;
                 }
                 _.pull(this.jonRamparts, closestRampart);
-                defender.travelTo(closestRampart, { roomCallback: this.preferRamparts });
+                defender.travelTo(closestRampart, {roomCallback: this.preferRamparts});
             }
             else {
                 defender.idleOffRoad(this.flag);
@@ -195,14 +204,14 @@ export class DefenseMission extends Mission {
 
             // attack
             if (defender.pos.isNearTo(target)) {
-                 if (defender.attack(target) === OK) {
-                     if (!this.attackedCreep || target.hits < this.attackedCreep.hits) {
-                         this.attackedCreep = this.closestHostile;
-                     }
-                 }
+                if (defender.attack(target) === OK) {
+                    if (!this.attackedCreep || target.hits < this.attackedCreep.hits) {
+                        this.attackedCreep = this.closestHostile;
+                    }
+                }
             }
             else {
-                let closeCreep = defender.pos.findInRange(this.room.hostiles, 1)[0] as Creep;
+                const closeCreep = defender.pos.findInRange(this.room.hostiles, 1)[0] as Creep;
                 if (closeCreep) {
                     if (defender.attack(closeCreep) === OK) {
                         this.attackedCreep = closeCreep;
@@ -220,7 +229,7 @@ export class DefenseMission extends Mission {
     private towerTargeting(towers: StructureTower[]) {
         if (!towers || towers.length === 0) return;
 
-        for (let tower of this.towers) {
+        for (const tower of this.towers) {
 
             let target = this.closestHostile;
 
@@ -241,7 +250,7 @@ export class DefenseMission extends Mission {
 
     private triggerSafeMode() {
         if (this.playerThreat && !this.memory.disableSafeMode) {
-            let wallCount = this.room.findStructures(STRUCTURE_WALL).concat(this.room.findStructures(STRUCTURE_RAMPART)).length;
+            const wallCount = this.room.findStructures(STRUCTURE_WALL).concat(this.room.findStructures(STRUCTURE_RAMPART)).length;
             if (this.memory.wallCount && wallCount < this.memory.wallCount) {
                 this.room.controller.activateSafeMode();
                 this.memory.unleash = true;
@@ -253,20 +262,20 @@ export class DefenseMission extends Mission {
         }
     }
 
-    preferRamparts = (roomName: string, matrix: CostMatrix) => {
+    public preferRamparts = (roomName: string, matrix: CostMatrix) => {
         if (roomName === this.room.name) {
 
             // block off hostiles and adjacent squares
-            for (let hostile of this.room.hostiles) {
+            for (const hostile of this.room.hostiles) {
                 matrix.set(hostile.pos.x, hostile.pos.y, 0xff);
                 for (let i = 1; i <= 8; i++) {
-                    let position = hostile.pos.getPositionAtDirection(i);
+                    const position = hostile.pos.getPositionAtDirection(i);
                     matrix.set(position.x, position.y, 0xff);
                 }
             }
 
             // set rampart costs to same as road
-            for (let rampart of this.wallRamparts) {
+            for (const rampart of this.wallRamparts) {
                 matrix.set(rampart.pos.x, rampart.pos.y, 1);
             }
             return matrix;
@@ -274,15 +283,15 @@ export class DefenseMission extends Mission {
     };
 
     private closeToWall(creep: Creep): boolean {
-        let wall = Game.getObjectById(this.memory.closestWallId) as Structure;
+        const wall = Game.getObjectById(this.memory.closestWallId) as Structure;
         if (wall && creep.pos.isNearTo(wall)) {
             return true;
         }
         else {
-            let walls = this.room.findStructures(STRUCTURE_RAMPART) as Structure[];
-            for (let wall of walls) {
-                if (creep.pos.isNearTo(wall)) {
-                    this.memory.closestWallId = wall.id;
+            const walls = this.room.findStructures(STRUCTURE_RAMPART) as Structure[];
+            for (const _wall of walls) {
+                if (creep.pos.isNearTo(_wall)) {
+                    this.memory.closestWallId = _wall.id;
                     return true;
                 }
             }
@@ -294,7 +303,7 @@ export class DefenseMission extends Mission {
             this.closestHostile = this.towers[0].pos.findClosestByRange(this.room.hostiles);
         }
 
-        let playerCreeps = _.filter(this.room.hostiles, (c: Creep) => {
+        const playerCreeps = _.filter(this.room.hostiles, (c: Creep) => {
             return c.owner.username !== "Invader" && c.body.length >= 40 && _.filter(c.body, part => part.boost).length > 0;
         }) as Creep[];
 
@@ -308,7 +317,7 @@ export class DefenseMission extends Mission {
                 console.log("DEFENSE: " + playerCreeps.length + " non-ally hostile creep in owned missionRoom: " + this.flag.pos.roomName);
             }
 
-            for (let creep of this.room.hostiles) {
+            for (const creep of this.room.hostiles) {
                 if (creep.partCount(HEAL) > 12) {
                     this.healers.push(creep);
                 }
@@ -320,16 +329,16 @@ export class DefenseMission extends Mission {
             this.likelyTowerDrainAttempt = this.attackers.length === 0;
             this.wallRamparts = _.filter(this.room.findStructures(STRUCTURE_RAMPART), (r: Structure) => {
                 return _.filter(r.pos.lookFor(LOOK_STRUCTURES), (s: Structure) => {
-                        return s.structureType !== STRUCTURE_ROAD;
-                    }).length === 1;
+                    return s.structureType !== STRUCTURE_ROAD;
+                }).length === 1;
             }) as Structure[];
             this.jonRamparts = this.wallRamparts.slice(0);
 
             // find squads
             let attackers = _.sortBy(this.attackers, (c: Creep) => { this.towers[0].pos.getRangeTo(c); });
             while (attackers.length > 0) {
-                let squad = attackers[0].pos.findInRange(attackers, 5);
-                let nearbyRamparts = attackers[0].pos.findInRange(this.wallRamparts, 10);
+                const squad = attackers[0].pos.findInRange(attackers, 5);
+                const nearbyRamparts = attackers[0].pos.findInRange(this.wallRamparts, 10);
                 if (this.enemySquads.length === 0 || nearbyRamparts.length > 0) {
                     this.enemySquads.push(squad);
                 }

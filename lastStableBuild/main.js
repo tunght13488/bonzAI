@@ -231,7 +231,7 @@ module.exports =
 	    scavangeResources: function () {
 	        for (let v in Game.rooms) {
 	            let room = Game.rooms[v];
-	            let resources = room.find(FIND_DROPPED_ENERGY);
+	            let resources = room.find(FIND_DROPPED_RESOURCES);
 	            for (let resource of resources) {
 	                if (resource.amount > 10) {
 	                    let creep = resource.pos.lookFor(LOOK_CREEPS)[0];
@@ -880,7 +880,7 @@ module.exports =
 	        let rangeToDestination = creep.pos.getRangeTo(destination);
 	        if (rangeToDestination <= 1) {
 	            let outcome = OK;
-	            if (rangeToDestination === 1 && destination.pos.isPassible()) {
+	            if (rangeToDestination === 1 && destination.pos.isPassable()) {
 	                outcome = creep.move(creep.pos.getDirectionTo(destination));
 	            }
 	            if (options.returnPosition && outcome === OK) {
@@ -4540,7 +4540,7 @@ module.exports =
 	            }
 	            for (let position of positions) {
 	                // check each position for valid conditions
-	                if (position.lookFor(LOOK_STRUCTURES).length === 0 && position.isPassible(true) && position.isNearTo(this.storage)) {
+	                if (position.lookFor(LOOK_STRUCTURES).length === 0 && position.isPassable(true) && position.isNearTo(this.storage)) {
 	                    console.log(`IGOR: found a good idle position in ${this.opName}: ${position}`);
 	                    this.memory.idlePosition = position;
 	                    break;
@@ -4610,7 +4610,7 @@ module.exports =
 	    moveToPosition(miner) {
 	        for (let i = 1; i <= 8; i++) {
 	            let position = this.source.pos.getPositionAtDirection(i);
-	            if (!position.isPassible(true))
+	            if (!position.isPassable(true))
 	                continue;
 	            if (!position.isNearTo(this.link))
 	                continue;
@@ -6562,7 +6562,7 @@ module.exports =
 	            if (position.roomName !== this.room.name) {
 	                continue;
 	            }
-	            if (position.isPassible(true)) {
+	            if (position.isPassable(true)) {
 	                continue;
 	            }
 	            if (position.lookForStructure(STRUCTURE_WALL) || position.lookForStructure(STRUCTURE_RAMPART))
@@ -10983,7 +10983,7 @@ module.exports =
 	        }
 	    }
 	    checkReady() {
-	        if (!this.empire.underCPULimit()) {
+	        if (!Empire.underCPULimit()) {
 	            notifier_1.notifier.add(`SURVEY: avoiding placement, cpu is over limit`);
 	            this.memory.nextAnalysis = Game.time + 10000;
 	            return;
@@ -12071,7 +12071,7 @@ module.exports =
 	                let positions = [];
 	                for (let i = 1; i <= 8; i++) {
 	                    let position = battery.pos.getPositionAtDirection(i);
-	                    if (!position.isPassible(true) || !position.inRangeTo(controller, 3)
+	                    if (!position.isPassable(true) || !position.inRangeTo(controller, 3)
 	                        || position.lookFor(LOOK_STRUCTURES).length > 0)
 	                        continue;
 	                    positions.push(position);
@@ -12490,7 +12490,7 @@ module.exports =
 	     * @param ignoreCreeps - if true, consider positions containing creeps to be open
 	     * @returns {boolean}
 	     */
-	    RoomPosition.prototype.isPassible = function (ignoreCreeps) {
+	    RoomPosition.prototype.isPassable = function (ignoreCreeps) {
 	        // look for walls
 	        if (_.head(this.lookFor(LOOK_TERRAIN)) !== "wall") {
 	            // look for creeps
@@ -12863,7 +12863,7 @@ module.exports =
 	                continue;
 	            if (position.lookFor(LOOK_STRUCTURES).length > 0)
 	                continue;
-	            if (!position.isPassible())
+	            if (!position.isPassable())
 	                continue;
 	            if (position.isNearExit(0))
 	                continue;

@@ -1,7 +1,8 @@
-import {TradeNetwork} from "./TradeNetwork";
 import {notifier} from "../notifier";
 import {BonzaiDiplomat} from "./BonzaiDiplomat";
+import {TradeNetwork} from "./TradeNetwork";
 import {WorldMap} from "./WorldMap";
+
 export class BonzaiNetwork extends TradeNetwork {
 
     private diplomat: BonzaiDiplomat;
@@ -16,7 +17,7 @@ export class BonzaiNetwork extends TradeNetwork {
             notifier.log(`EMPIRE: no description on decipher from ${item.sender.username}.`);
             return;
         }
-        let description = item.description.toLocaleLowerCase();
+        const description = item.description.toLocaleLowerCase();
         if (description === "safe") {
             this.diplomat.safe[item.sender.username] = true;
             notifier.log(`EMPIRE: ${item.sender.username} requested to be added to safe list`);
@@ -34,7 +35,7 @@ export class BonzaiNetwork extends TradeNetwork {
             notifier.log(`EMPIRE: ${item.sender.username} requested to be removed from danger list`);
         }
         else {
-            notifier.log(`EMPIRE: invalid description on decipher from ${item.sender.username}: ${_.escape(item.description)}`)
+            notifier.log(`EMPIRE: invalid description on decipher from ${item.sender.username}: ${_.escape(item.description)}`);
         }
     }
 

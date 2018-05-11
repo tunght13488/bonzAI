@@ -1,7 +1,8 @@
-import {RaidMission} from "./RaidMission";
-import {Operation} from "../operations/Operation";
 import {RaidData} from "../../interfaces";
+import {Operation} from "../operations/Operation";
 import {SpawnGroup} from "../SpawnGroup";
+import {RaidMission} from "./RaidMission";
+
 export class WreckerMission extends RaidMission {
 
     constructor(operation: Operation, name: string, raidData: RaidData, spawnGroup: SpawnGroup, boostLevel: number, allowSpawn: boolean) {
@@ -19,7 +20,7 @@ export class WreckerMission extends RaidMission {
         ];
     }
 
-    clearActions(attackingCreep: boolean) {
+    public clearActions(attackingCreep: boolean) {
         this.standardClearActions(attackingCreep);
     }
 }

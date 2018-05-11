@@ -1,7 +1,6 @@
-import {PowerFlagScan, Coord} from "../interfaces";
-import {empire} from "./loopHelper";
-import {ROOMTYPE_ALLEY, ROOMTYPE_CORE, ROOMTYPE_SOURCEKEEPER, ROOMTYPE_CONTROLLER} from "../ai/WorldMap";
-export var helper = {
+import {Coord} from "../interfaces";
+
+export let helper = {
     getStoredAmount(target: any, resourceType: string) {
         if (target instanceof Creep) {
             return target.carry[resourceType];
@@ -60,7 +59,7 @@ export var helper = {
     addTerrainToMatrix(matrix: CostMatrix, roomName: string): CostMatrix {
         for (let x = 0; x < 50; x++) {
             for (let y = 0; y < 50; y++) {
-                let terrain = Game.map.getTerrainAt(x, y, roomName);
+                const terrain = Game.map.getTerrainAt(x, y, roomName);
                 if (terrain === "wall") {
                     matrix.set(x, y, 0xff);
                 }
@@ -79,7 +78,7 @@ export var helper = {
         for (let x = 0; x < 50; x += 49) {
             for (let y = 0; y < 50; y++) {
                 if (roomName) {
-                    let terrain = Game.map.getTerrainAt(x, y, roomName);
+                    const terrain = Game.map.getTerrainAt(x, y, roomName);
                     if (terrain !== "wall") { matrix.set(x, y, cost); }
                 }
                 else { matrix.set(x, y, 0xff); }
@@ -88,7 +87,7 @@ export var helper = {
         for (let x = 0; x < 50; x++) {
             for (let y = 0; y < 50; y += 49) {
                 if (roomName) {
-                    let terrain = Game.map.getTerrainAt(x, y, roomName);
+                    const terrain = Game.map.getTerrainAt(x, y, roomName);
                     if (terrain !== "wall") { matrix.set(x, y, cost); }
                 }
                 else { matrix.set(x, y, 0xff); }
@@ -102,7 +101,7 @@ export var helper = {
         for (let y = 0; y < 50; y++) {
             let line = "";
             for (let x = 0; x < 50; x++) {
-                let value = matrix.get(x, y);
+                const value = matrix.get(x, y);
                 if (value === 0xff) line += "f";
                 else line += value % 10;
             }
@@ -131,17 +130,17 @@ export var helper = {
         return new RoomPosition(centerPosition.x + xCoord, centerPosition.y + yCoord, centerPosition.roomName);
     },
 
-    positionToCoord(pos: {x: number, y: number}, centerPoint: {x: number, y: number}, rotation = 0): Coord {
-        let xCoord = pos.x - centerPoint.x;
-        let yCoord = pos.y - centerPoint.y;
+    positionToCoord(pos: { x: number, y: number }, centerPoint: { x: number, y: number }, rotation = 0): Coord {
+        const xCoord = pos.x - centerPoint.x;
+        const yCoord = pos.y - centerPoint.y;
         if (rotation === 0) {
-            return {x: xCoord, y: yCoord };
+            return {x: xCoord, y: yCoord};
         }
         else if (rotation === 1) {
-            return {x: yCoord, y: -xCoord };
+            return {x: yCoord, y: -xCoord};
         }
         else if (rotation === 2) {
-            return {x: -xCoord, y: -yCoord };
+            return {x: -xCoord, y: -yCoord};
         }
         else if (rotation === 3) {
             return {x: -yCoord, y: xCoord};
@@ -151,7 +150,7 @@ export var helper = {
     serializePath(startPos: RoomPosition, path: RoomPosition[]): string {
         let serializedPath = "";
         let lastPosition = startPos;
-        for (let position of path) {
+        for (const position of path) {
             if (position.roomName === lastPosition.roomName) {
                 serializedPath += lastPosition.getDirectionTo(position);
             }
@@ -167,9 +166,9 @@ export var helper = {
                     if (Math.abs(yDelta) !== radius && Math.abs(xDelta) !== radius) {
                         continue;
                     }
-                    let x = 25 + xDelta;
-                    let y = 25 + yDelta;
-                    let terrain = Game.map.getTerrainAt(x, y, roomName);
+                    const x = 25 + xDelta;
+                    const y = 25 + yDelta;
+                    const terrain = Game.map.getTerrainAt(x, y, roomName);
                     if (terrain !== "wall") {
                         return new RoomPosition(x, y, roomName);
                     }
@@ -180,12 +179,12 @@ export var helper = {
 
     debugPath(path: RoomPosition[], identifier = "") {
         let count = 0;
-        for (let position of path) {
-            let room = Game.rooms[position.roomName];
+        for (const position of path) {
+            const room = Game.rooms[position.roomName];
             if (room) {
-                let name = "debugPath" + identifier + count;
+                const name = "debugPath" + identifier + count;
                 count++;
-                let flag = Game.flags[name];
+                const flag = Game.flags[name];
                 if (flag) {
                     flag.setPosition(position);
                 }
@@ -196,8 +195,8 @@ export var helper = {
         }
 
         for (let i = count; i < 1000; i++) {
-            let name = "debugPath" + identifier + i;
-            let flag = Game.flags[name];
+            const name = "debugPath" + identifier + i;
+            const flag = Game.flags[name];
             if (flag) {
                 flag.remove();
             }
@@ -213,20 +212,21 @@ export var helper = {
         if (range <= TOWER_OPTIMAL_RANGE) { return TOWER_POWER_ATTACK; }
         if (range >= TOWER_FALLOFF_RANGE) { range = TOWER_FALLOFF_RANGE; }
         return TOWER_POWER_ATTACK - (TOWER_POWER_ATTACK * TOWER_FALLOFF *
-            (range - TOWER_OPTIMAL_RANGE) / (TOWER_FALLOFF_RANGE - TOWER_OPTIMAL_RANGE))
+            (range - TOWER_OPTIMAL_RANGE) / (TOWER_FALLOFF_RANGE - TOWER_OPTIMAL_RANGE));
     },
 
     permutator(inputArr): number[][] {
-        let result = [];
+        const result = [];
 
         const permute = (arr, m = []) => {
             if (arr.length === 0) {
-                result.push(m)
-            } else {
+                result.push(m);
+            }
+            else {
                 for (let i = 0; i < arr.length; i++) {
-                    let curr = arr.slice();
-                    let next = curr.splice(i, 1);
-                    permute(curr.slice(), m.concat(next))
+                    const curr = arr.slice();
+                    const next = curr.splice(i, 1);
+                    permute(curr.slice(), m.concat(next));
                 }
             }
         };
@@ -238,5 +238,5 @@ export var helper = {
 
     randomInterval(interval: number): number {
         return interval + Math.floor((Math.random() - .5) * interval * .2);
-    }
+    },
 };

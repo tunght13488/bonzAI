@@ -1,16 +1,17 @@
-import {SeedData, SeedSelection, Coord} from "../interfaces";
 import {helper} from "../helpers/helper";
+import {Coord, SeedData, SeedSelection} from "../interfaces";
+
 export class SeedAnalysis {
 
-    data: SeedData;
-    room: Room;
+    public data: SeedData;
+    public room: Room;
 
     constructor(room: Room, seedData: SeedData) {
         this.data = seedData;
         this.room = room;
     }
 
-    run(staticStructures?: {[structureType: string]: Coord[]}, layoutType?: string): SeedSelection {
+    public run(staticStructures?: { [structureType: string]: Coord[] }, layoutType?: string): SeedSelection {
 
         let layoutTypes;
         if (layoutType) {
@@ -20,14 +21,14 @@ export class SeedAnalysis {
             layoutTypes = ["quad", "flex"];
         }
 
-        for (let type of layoutTypes) {
+        for (const type of layoutTypes) {
             if (!this.data.seedScan[type]) {
                 this.findSeeds(type);
             }
 
             if (this.data.seedScan[type].length > 0) {
                 if (staticStructures) {
-                    let result = this.findByStructures(type, staticStructures);
+                    const result = this.findByStructures(type, staticStructures);
                     if (result) return result;
                 }
                 else {
@@ -36,11 +37,33 @@ export class SeedAnalysis {
             }
         }
 
-        console.log(`No viable seeds in ${this.room.name}`)
+        console.log(`No viable seeds in ${this.room.name}`);
+    }
+
+    public checkArea(xOrigin: number, yOrigin: number, radius: number, taper: number, area: LookAtResultMatrix) {
+        for (let xDelta = -radius; xDelta <= radius; xDelta++) {
+            for (let yDelta = -radius; yDelta <= radius; yDelta++) {
+                if (Math.abs(xDelta) + Math.abs(yDelta) > radius * 2 - taper) continue;
+                if (area[yOrigin + yDelta][xOrigin + xDelta][0] === "wall") {
+                    console.log(`x: ${xOrigin} y: ${yOrigin} disqualified due to wall at ${xOrigin +
+                    xDelta}, ${yOrigin + yDelta}`);
+                    return false;
+                }
+            }
+        }
+
+        // check source proximity
+        const originPosition = new RoomPosition(xOrigin, yOrigin, this.room.name);
+        for (const source of this.room.find<Source>(FIND_SOURCES)) {
+            if (originPosition.inRangeTo(source, radius + 2)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private findSeeds(seedType: string) {
-
         let radius;
         let wallMargin;
         let taper;
@@ -55,8 +78,8 @@ export class SeedAnalysis {
             taper = 4;
         }
 
-        let requiredWallOffset = 2;
-        let totalMargin = requiredWallOffset + radius + wallMargin;
+        const requiredWallOffset = 2;
+        const totalMargin = requiredWallOffset + radius + wallMargin;
         if (!this.data.seedScan[seedType]) {
             console.log(`AUTO: initiating seed scan: ${seedType}`);
             this.data.seedScan[seedType] = [];
@@ -66,10 +89,15 @@ export class SeedAnalysis {
         while (indexX <= 49 - totalMargin) {
             let indexY = totalMargin;
             while (indexY <= 49 - totalMargin) {
-                let area = this.room.lookForAtArea(LOOK_TERRAIN,
-                    indexY - radius, indexX - radius, indexY + radius, indexX + radius) as LookAtResultMatrix;
+                const area = this.room.lookForAtArea(
+                    LOOK_TERRAIN,
+                    indexY - radius,
+                    indexX - radius,
+                    indexY + radius,
+                    indexX + radius,
+                ) as LookAtResultMatrix;
 
-                let foundSeed = this.checkArea(indexX, indexY, radius, taper, area);
+                const foundSeed = this.checkArea(indexX, indexY, radius, taper, area);
                 if (foundSeed) {
                     this.data.seedScan[seedType].push({x: indexX, y: indexY});
                 }
@@ -87,35 +115,13 @@ export class SeedAnalysis {
         }
     }
 
-    checkArea(xOrigin: number, yOrigin: number, radius: number, taper: number, area: LookAtResultMatrix) {
-        for (let xDelta = -radius; xDelta <= radius; xDelta++) {
-            for (let yDelta = -radius; yDelta <= radius; yDelta++) {
-                if (Math.abs(xDelta) + Math.abs(yDelta) > radius * 2 - taper) continue;
-                if (area[yOrigin + yDelta][xOrigin + xDelta][0] === "wall") {
-                    console.log(`x: ${xOrigin} y: ${yOrigin} disqualified due to wall at ${xOrigin + xDelta}, ${yOrigin + yDelta}`);
-                    return false;
-                }
-            }
-        }
-
-        // check source proximity
-        let originPosition = new RoomPosition(xOrigin, yOrigin, this.room.name);
-        for (let source of this.room.find<Source>(FIND_SOURCES)) {
-            if (originPosition.inRangeTo(source, radius + 2)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     private selectSeed(seedType: string, seeds: Coord[]): SeedSelection {
         let storageDelta;
         if (seedType === "quad") {
-            storageDelta = {x: 0, y: 4}
+            storageDelta = {x: 0, y: 4};
         }
         else if (seedType === "flex") {
-            storageDelta = {x: 0, y: -3}
+            storageDelta = {x: 0, y: -3};
         }
         else {
             console.log("unrecognized seed type");
@@ -126,11 +132,11 @@ export class SeedAnalysis {
             this.data.seedSelectData = {
                 index: 0,
                 rotation: 0,
-                best: { seedType: seedType, origin: undefined, rotation: undefined, energyPerDistance: 0 }
-            }
+                best: {seedType, origin: undefined, rotation: undefined, energyPerDistance: 0},
+            };
         }
 
-        let data = this.data.seedSelectData;
+        const data = this.data.seedSelectData;
         if (data.rotation > 3) {
             data.index++;
             data.rotation = 0;
@@ -147,12 +153,15 @@ export class SeedAnalysis {
             }
         }
 
-        let storagePosition = helper.coordToPosition(storageDelta,
-            new RoomPosition(seeds[data.index].x, seeds[data.index].y, this.room.name), data.rotation);
+        const storagePosition = helper.coordToPosition(storageDelta, new RoomPosition(
+            seeds[data.index].x,
+            seeds[data.index].y,
+            this.room.name,
+        ), data.rotation);
         let energyPerDistance = 0;
-        for (let sourceDatum of this.data.sourceData) {
-            let sourcePosition = helper.deserializeRoomPosition(sourceDatum.pos);
-            let ret = PathFinder.search(storagePosition, [{pos: sourcePosition, range: 1}], {
+        for (const sourceDatum of this.data.sourceData) {
+            const sourcePosition = helper.deserializeRoomPosition(sourceDatum.pos);
+            const ret = PathFinder.search(storagePosition, [{pos: sourcePosition, range: 1}], {
                 swampCost: 1,
                 maxOps: 4000,
             });
@@ -167,12 +176,14 @@ export class SeedAnalysis {
 
         if (energyPerDistance > data.best.energyPerDistance) {
             console.log(`${this.room.name} found better seed, energyPerDistance: ${energyPerDistance}`);
-            data.best = { seedType: seedType, origin: seeds[data.index], rotation: data.rotation,
-                energyPerDistance: energyPerDistance}
+            data.best = {
+                seedType, origin: seeds[data.index], rotation: data.rotation,
+                energyPerDistance,
+            };
         }
 
         // update rotation for next tick
-        data.rotation++
+        data.rotation++;
     }
 
     private findBySpawn(seedType: string, spawn: StructureSpawn): SeedSelection {
@@ -184,39 +195,39 @@ export class SeedAnalysis {
             spawnCoords = [{x: -2, y: 1}, {x: -1, y: 2}, {x: 0, y: 3}];
         }
 
-        let seeds = this.data.seedScan[seedType];
-        for (let seed of seeds) {
-            let centerPosition = new RoomPosition(seed.x, seed.y, this.room.name);
-            for (let coord of spawnCoords) {
+        const seeds = this.data.seedScan[seedType];
+        for (const seed of seeds) {
+            const centerPosition = new RoomPosition(seed.x, seed.y, this.room.name);
+            for (const coord of spawnCoords) {
                 for (let rotation = 0; rotation <= 3; rotation++) {
-                    let testPosition = helper.coordToPosition(coord, centerPosition, rotation);
+                    const testPosition = helper.coordToPosition(coord, centerPosition, rotation);
                     if (spawn.pos.inRangeTo(testPosition, 0)) {
                         console.log(`seed: ${JSON.stringify(seed)}, centerPos: ${centerPosition}, rotation: ${rotation},` +
                             `\ncoord: ${JSON.stringify(coord)} testPos: ${testPosition}, spawnPos: ${spawn.pos}`);
-                        return { seedType: seedType, origin: seed, rotation: rotation, energyPerDistance: undefined }
+                        return {seedType, origin: seed, rotation, energyPerDistance: undefined};
                     }
                 }
             }
         }
     }
 
-    private findByStructures(seedType: string, staticStructures: {[structureType: string]: Coord[]}): SeedSelection {
+    private findByStructures(seedType: string, staticStructures: { [structureType: string]: Coord[] }): SeedSelection {
 
         let mostHits = 0;
         let bestSeed;
         let bestRotation;
 
-        let seeds = this.data.seedScan[seedType];
-        for (let seed of seeds) {
-            let centerPosition = new RoomPosition(seed.x, seed.y, this.room.name);
+        const seeds = this.data.seedScan[seedType];
+        for (const seed of seeds) {
+            const centerPosition = new RoomPosition(seed.x, seed.y, this.room.name);
             for (let rotation = 0; rotation <= 3; rotation++) {
 
                 let structureHits = 0;
 
-                for (let structureType of [STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_LAB, STRUCTURE_TERMINAL]) {
-                    let coords = staticStructures[structureType];
-                    for (let coord of coords) {
-                        let testPosition = helper.coordToPosition(coord, centerPosition, rotation);
+                for (const structureType of [STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_LAB, STRUCTURE_TERMINAL]) {
+                    const coords = staticStructures[structureType];
+                    for (const coord of coords) {
+                        const testPosition = helper.coordToPosition(coord, centerPosition, rotation);
                         if (testPosition.lookForStructure(structureType)) {
                             structureHits++;
                         }
@@ -232,7 +243,7 @@ export class SeedAnalysis {
         }
 
         if (mostHits > 0) {
-            return { seedType: seedType, origin: bestSeed, rotation: bestRotation, energyPerDistance: undefined }
+            return {seedType, origin: bestSeed, rotation: bestRotation, energyPerDistance: undefined};
         }
     }
 }

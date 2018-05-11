@@ -1,9 +1,9 @@
-import {RaidMission} from "./RaidMission";
-import {Operation} from "../operations/Operation";
 import {RaidData} from "../../interfaces";
+import {Operation} from "../operations/Operation";
 import {SpawnGroup} from "../SpawnGroup";
-export class BrawlerMission extends RaidMission {
+import {RaidMission} from "./RaidMission";
 
+export class BrawlerMission extends RaidMission {
     constructor(operation: Operation, name: string, raidData: RaidData, spawnGroup: SpawnGroup, boostLevel: number, allowSpawn: boolean) {
         super(operation, name, raidData, spawnGroup, boostLevel, allowSpawn);
         this.specialistPart = ATTACK;
@@ -20,7 +20,7 @@ export class BrawlerMission extends RaidMission {
         this.killCreeps = operation.memory.killCreeps;
     }
 
-    clearActions(attackingCreep: boolean) {
+    public clearActions(attackingCreep: boolean) {
         this.standardClearActions(attackingCreep);
     }
 }

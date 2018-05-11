@@ -1,12 +1,12 @@
-import {Operation} from "./ai/operations/Operation";
 import {Empire} from "./ai/Empire";
 import {Agent} from "./ai/missions/Agent";
+import {Operation} from "./ai/operations/Operation";
 import {SpawnGroup} from "./ai/SpawnGroup";
 
 export interface bonzAI {
     cache: {
-        structures: { [roomName: string]: {[structureType: string]: Structure[]} },
-        hostiles:  { [roomName: string]: Creep[] },
+        structures: { [roomName: string]: { [structureType: string]: Structure[] } },
+        hostiles: { [roomName: string]: Creep[] },
         hostilesAndLairs: { [roomName: string]: RoomObject[] }
         lairThreats: { [roomName: string]: StructureKeeperLair[] }
         fleeObjects: { [roomName: string]: RoomObject[] }
@@ -15,7 +15,7 @@ export interface bonzAI {
         activeLabCount: number;
         placedRoad: boolean;
     };
-    operations: {[opName: string]: Operation }
+    operations: { [opName: string]: Operation };
     empire: Empire;
 }
 
@@ -38,7 +38,7 @@ export interface IgorCommand {
 export interface LabProcess {
     targetShortage: Shortage;
     currentShortage: Shortage;
-    reagentLoads: {[mineralType: string]: number};
+    reagentLoads: { [mineralType: string]: number };
     loadProgress: number;
 }
 
@@ -51,7 +51,7 @@ export interface PowerFlagScan {
     alleyRoomNames: string[];
     alleyIndex: number;
     flagIndex: number;
-    matrices: {[roomName: string]: CostMatrix};
+    matrices: { [roomName: string]: CostMatrix };
     avoidRooms: string[];
 }
 
@@ -81,14 +81,14 @@ export interface BoostRequests {
 
 export interface RaidData {
     raidAgents: Agent[];
-    injuredCreeps: {[creepName: string]: number};
+    injuredCreeps: { [creepName: string]: number };
     breachFlags: Flag[];
     breachStructures: Structure[];
     attackRoom: Room;
     fallbackFlag: Flag;
     targetStructures: Structure[];
     fallback: boolean;
-    obstacles: {pos: RoomPosition}[];
+    obstacles: Array<{ pos: RoomPosition }>;
 }
 
 export interface RaidCache {
@@ -124,14 +124,14 @@ export interface SeedSelection {
 }
 
 export interface SeedData {
-    sourceData: {pos: RoomPosition, amount: number}[];
+    sourceData: Array<{ pos: RoomPosition, amount: number }>;
     seedScan: {
-        [seedType: string]: Coord[]
+        [seedType: string]: Coord[],
     };
     seedSelectData: {
         index: number
         rotation: number
-        best: SeedSelection
+        best: SeedSelection,
     };
 }
 

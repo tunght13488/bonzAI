@@ -1,19 +1,20 @@
-import {Guru} from "./Guru";
 import {Operation} from "../operations/Operation";
+import {Guru} from "./Guru";
 import {HostileAgent} from "./HostileAgent";
+
 export class InvaderGuru extends Guru {
 
     public invaders: HostileAgent[] = [];
     public invadersPresent: boolean;
     public hasVision = false;
 
-    memory: {
+    public memory: {
         invaderProbable: boolean
         invaderTrack: {
             energyHarvested: number,
             tickLastSeen: number,
             energyPossible: number,
-        }
+        },
     };
 
     constructor(operation: Operation) {
@@ -23,7 +24,7 @@ export class InvaderGuru extends Guru {
     public init() {
         if (!this.room) { return; }
         this.hasVision = true;
-        for (let creep of _.filter(this.room.hostiles, c => c.owner.username === "Invader")) {
+        for (const creep of _.filter(this.room.hostiles, c => c.owner.username === "Invader")) {
             this.invaders.push(new HostileAgent(creep));
         }
 
@@ -42,15 +43,16 @@ export class InvaderGuru extends Guru {
             this.memory.invaderTrack = {
                 energyHarvested: 0,
                 tickLastSeen: Game.time,
-                energyPossible: 0 };
+                energyPossible: 0,
+            };
         }
 
-        let memory = this.memory.invaderTrack;
+        const memory = this.memory.invaderTrack;
 
         let harvested = 0;
         let possible = 0;
-        let sources = this.room.find(FIND_SOURCES) as Source[];
-        for (let source of sources) {
+        const sources = this.room.find(FIND_SOURCES) as Source[];
+        for (const source of sources) {
             if (source.ticksToRegeneration === 1) {
                 harvested += source.energyCapacity - source.energy;
                 possible += source.energyCapacity;

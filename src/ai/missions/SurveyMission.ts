@@ -1,16 +1,15 @@
-import {Mission} from "./Mission";
-import {Operation} from "../operations/Operation";
 import {helper} from "../../helpers/helper";
-import {SurveyAnalyzer} from "./SurveyAnalyzer";
-import {empire} from "../../helpers/loopHelper";
+import {Operation} from "../operations/Operation";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
+import {SurveyAnalyzer} from "./SurveyAnalyzer";
 
 export class SurveyMission extends Mission {
 
-    surveyors: Agent[];
-    needsVision: string;
-    chosenRoom: {roomName: string, orderDemolition: boolean};
-    memory: {
+    public surveyors: Agent[];
+    public needsVision: string;
+    public chosenRoom: { roomName: string, orderDemolition: boolean };
+    public memory: {
         surveyComplete: boolean;
     };
 
@@ -18,48 +17,48 @@ export class SurveyMission extends Mission {
         super(operation, "survey");
     }
 
-    initMission() {
+    public initMission() {
         if (this.memory.surveyComplete) { return; }
-        let analyzer = new SurveyAnalyzer(this);
+        const analyzer = new SurveyAnalyzer(this);
         this.needsVision = analyzer.run();
     }
 
-    maxSurveyors = () => {
+    public maxSurveyors = () => {
         if (this.needsVision && !this.room.findStructures(STRUCTURE_OBSERVER)[0] || this.chosenRoom) {
             return 1;
-        } else {
+        }
+        else {
             return 0;
         }
     };
 
-    roleCall() {
-
+    public roleCall() {
 
         this.surveyors = this.headCount("surveyor", () => this.workerBody(0, 0, 1), this.maxSurveyors);
     }
 
-    missionActions() {
+    public missionActions() {
 
-        for (let surveyor of this.surveyors) {
+        for (const surveyor of this.surveyors) {
             if (this.needsVision) {
                 this.explorerActions(surveyor);
             }
         }
 
         if (this.needsVision) {
-            let observer = this.room.findStructures<StructureObserver>(STRUCTURE_OBSERVER)[0];
+            const observer = this.room.findStructures<StructureObserver>(STRUCTURE_OBSERVER)[0];
             if (!observer) { return; }
             observer.observeRoom(this.needsVision);
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
     }
 
-    explorerActions(explorer: Agent) {
+    public explorerActions(explorer: Agent) {
         if (this.needsVision) {
             explorer.travelTo({pos: helper.pathablePosition(this.needsVision)});
         }

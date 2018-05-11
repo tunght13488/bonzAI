@@ -1,23 +1,21 @@
-import {Operation} from "./Operation";
-import {Empire} from "../Empire";
-import {EmergencyMinerMission} from "../missions/EmergencyMission";
-import {RefillMission} from "../missions/RefillMission";
-import {DefenseMission} from "../missions/DefenseMission";
-import {PowerMission} from "../missions/PowerMission";
-import {TerminalNetworkMission} from "../missions/TerminalNetworkMission";
-import {IgorMission} from "../missions/IgorMission";
-import {LinkMiningMission} from "../missions/LinkMiningMission";
-import {MiningMission} from "../missions/MiningMission";
-import {BuilderMission} from "../missions/BuilderMission";
-import {LinkNetworkMission} from "../missions/LinkNetworkMission";
-import {UpgradeMission} from "../missions/UpgradeMission";
-import {GeologyMission} from "../missions/GeologyMission";
-import {PaverMission} from "../missions/PaverMission";
-import {DefenseGuru} from "./DefenseGuru";
 import {OperationPriority} from "../../config/constants";
 import {empire} from "../../helpers/loopHelper";
-import {NEED_ENERGY_THRESHOLD, ENERGYSINK_THRESHOLD} from "../TradeNetwork";
-
+import {BuilderMission} from "../missions/BuilderMission";
+import {DefenseMission} from "../missions/DefenseMission";
+import {EmergencyMinerMission} from "../missions/EmergencyMission";
+import {GeologyMission} from "../missions/GeologyMission";
+import {IgorMission} from "../missions/IgorMission";
+import {LinkMiningMission} from "../missions/LinkMiningMission";
+import {LinkNetworkMission} from "../missions/LinkNetworkMission";
+import {MiningMission} from "../missions/MiningMission";
+import {PaverMission} from "../missions/PaverMission";
+import {PowerMission} from "../missions/PowerMission";
+import {RefillMission} from "../missions/RefillMission";
+import {TerminalNetworkMission} from "../missions/TerminalNetworkMission";
+import {UpgradeMission} from "../missions/UpgradeMission";
+import {ENERGYSINK_THRESHOLD, NEED_ENERGY_THRESHOLD} from "../TradeNetwork";
+import {DefenseGuru} from "./DefenseGuru";
+import {Operation} from "./Operation";
 
 export class FortOperation extends Operation {
 
@@ -26,15 +24,13 @@ export class FortOperation extends Operation {
      * @param flag
      * @param name
      * @param type
-     * @param empire
      */
-
     constructor(flag: Flag, name: string, type: string) {
         super(flag, name, type);
         this.priority = OperationPriority.OwnedRoom;
     }
 
-    initOperation() {
+    public initOperation() {
         if (this.flag.room) {
             // initOperation FortOperation variables
             this.spawnGroup = empire.getSpawnGroup(this.flag.room.name);
@@ -43,9 +39,9 @@ export class FortOperation extends Operation {
             this.addMission(new EmergencyMinerMission(this));
 
             // refill spawning energy - will spawn small spawnCart if needed
-            let structures = this.flag.room.findStructures(STRUCTURE_EXTENSION)
+            const structures = this.flag.room.findStructures(STRUCTURE_EXTENSION)
                 .concat(this.flag.room.find(FIND_MY_SPAWNS)) as Structure[];
-            let maxCarts = this.flag.room.storage ? 1 : 2;
+            const maxCarts = this.flag.room.storage ? 1 : 2;
             this.addMission(new RefillMission(this));
 
             this.addMission(new DefenseMission(this));
@@ -63,9 +59,9 @@ export class FortOperation extends Operation {
             // harvest energy
             for (let i = 0; i < this.sources.length; i++) {
                 if (this.sources[i].pos.lookFor(LOOK_FLAGS).length > 0) continue;
-                let source = this.sources[i];
+                const source = this.sources[i];
                 if (this.flag.room.controller.level === 8 && this.flag.room.storage) {
-                    let link = source.findMemoStructure(STRUCTURE_LINK, 2) as StructureLink;
+                    const link = source.findMemoStructure(STRUCTURE_LINK, 2) as StructureLink;
                     if (link) {
                         this.addMission(new LinkMiningMission(this, "linkMiner" + i, source, link));
                         continue;
@@ -75,7 +71,7 @@ export class FortOperation extends Operation {
             }
 
             // build construction
-            let defenseGuru = new DefenseGuru(this);
+            const defenseGuru = new DefenseGuru(this);
             this.addMission(new BuilderMission(this, defenseGuru));
 
             // build walls
@@ -85,14 +81,14 @@ export class FortOperation extends Operation {
             if (this.flag.room.storage) {
                 this.addMission(new LinkNetworkMission(this));
 
-                let extractor = this.mineral.pos.lookFor<StructureExtractor>(LOOK_STRUCTURES)[0];
+                const extractor = this.mineral.pos.lookFor<StructureExtractor>(LOOK_STRUCTURES)[0];
                 if (this.flag.room.energyCapacityAvailable > 5000 && extractor && extractor.my) {
                     this.addMission(new GeologyMission(this));
                 }
             }
 
             // upgrader controller
-            let boostUpgraders = this.flag.room.controller.level < 8;
+            const boostUpgraders = this.flag.room.controller.level < 8;
             this.addMission(new UpgradeMission(this, boostUpgraders));
 
             // pave all roads in the missionRoom
@@ -100,17 +96,20 @@ export class FortOperation extends Operation {
         }
     }
 
-    finalizeOperation() {
+    public finalizeOperation() {
     }
-    invalidateOperationCache() {
+
+    public invalidateOperationCache() {
         this.memory.masonPotency = undefined;
         this.memory.builderPotency = undefined;
     }
 
-    calcMasonPotency(): number {
+    public calcMasonPotency(): number {
         if (!this.memory.masonPotency) {
-            let surplusMode = this.flag.room.storage && this.flag.room.storage.store.energy > NEED_ENERGY_THRESHOLD;
-            let megaSurplusMode = this.flag.room.storage && this.flag.room.storage.store.energy > ENERGYSINK_THRESHOLD;
+            const surplusMode = this.flag.room.storage && this.flag.room.storage.store.energy > NEED_ENERGY_THRESHOLD;
+            const megaSurplusMode = this.flag.room.storage &&
+                this.flag.room.storage.store.energy >
+                ENERGYSINK_THRESHOLD;
             let potencyBasedOnStorage = megaSurplusMode ? 10 : surplusMode ? 5 : 1;
 
             if (this.memory.wallBoost) {
@@ -118,7 +117,7 @@ export class FortOperation extends Operation {
             }
 
             // would happen to be the same as the potency used for builders
-            let potencyBasedOnSpawn = this.calcBuilderPotency();
+            const potencyBasedOnSpawn = this.calcBuilderPotency();
 
             if (this.memory.wallBoost) {
                 this.memory.mason.activateBoost = true;
@@ -129,7 +128,7 @@ export class FortOperation extends Operation {
         return this.memory.masonPotency;
     }
 
-    calcBuilderPotency(): number {
+    public calcBuilderPotency(): number {
         if (!this.memory.builderPotency) {
             this.memory.builderPotency = Math.min(Math.floor(this.spawnGroup.maxSpawnEnergy / 175), 20);
         }
@@ -137,10 +136,11 @@ export class FortOperation extends Operation {
     }
 
     public nuke(x: number, y: number, roomName: string): string {
-        let nuker = _.head(this.flag.room.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_NUKER}})) as StructureNuker;
-        let outcome = nuker.launchNuke(new RoomPosition(x, y, roomName));
+        const nuker = _.head(this.flag.room.find(FIND_MY_STRUCTURES,
+            {filter: {structureType: STRUCTURE_NUKER}})) as StructureNuker;
+        const outcome = nuker.launchNuke(new RoomPosition(x, y, roomName));
         if (outcome === OK) {
-            empire.map.addNuke({tick: Game.time, roomName: roomName});
+            empire.map.addNuke({tick: Game.time, roomName});
             return "NUKER: Bombs away! \\o/";
         }
         else {

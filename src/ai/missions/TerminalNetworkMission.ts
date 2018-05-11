@@ -1,41 +1,42 @@
-import {Mission} from "./Mission";
-import {Operation} from "../operations/Operation";
-import {MINERALS_RAW, RESERVE_AMOUNT} from "../TradeNetwork";
 import {MINERAL_STORAGE_TARGET} from "../../config/constants";
 import {empire} from "../../helpers/loopHelper";
+import {Operation} from "../operations/Operation";
+import {MINERALS_RAW, RESERVE_AMOUNT} from "../TradeNetwork";
+import {Mission} from "./Mission";
+
 export class TerminalNetworkMission extends Mission {
 
-    terminal: StructureTerminal;
-    storage: StructureStorage;
+    public terminal: StructureTerminal;
+    public storage: StructureStorage;
 
     constructor(operation: Operation) {
         super(operation, "network");
     }
 
-    initMission() {
+    public initMission() {
         this.terminal = this.room.terminal;
         this.storage = this.room.storage;
     }
 
-    roleCall() {
+    public roleCall() {
     }
 
-    missionActions() {
+    public missionActions() {
         this.sellOverstock();
         this.checkOverstock();
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
     }
 
     private sellOverstock() {
 
         if (Game.time % 100 !== 1) return;
 
-        for (let mineralType of MINERALS_RAW) {
+        for (const mineralType of MINERALS_RAW) {
             if (this.storage.store[mineralType] >= MINERAL_STORAGE_TARGET[mineralType]
                 && this.storage.room.terminal.store[mineralType] >= RESERVE_AMOUNT) {
                 console.log("TRADE: have too much", mineralType, "in", this.storage.room, this.storage.store[mineralType]);
@@ -54,14 +55,14 @@ export class TerminalNetworkMission extends Mission {
 
         let mostStockedAmount = 0;
         let mostStockedResource: string;
-        for (let resourceType in this.terminal.store) {
+        for (const resourceType in this.terminal.store) {
             if (resourceType === RESOURCE_ENERGY) continue;
             if (this.terminal.store[resourceType] < mostStockedAmount) continue;
             mostStockedAmount = this.terminal.store[resourceType];
             mostStockedResource = resourceType;
         }
 
-        let leastStockedTerminal = _.sortBy(empire.network.terminals, (t: StructureTerminal) => _.sum(t.store))[0];
+        const leastStockedTerminal = _.sortBy(empire.network.terminals, (t: StructureTerminal) => _.sum(t.store))[0];
         this.terminal.send(mostStockedResource, RESERVE_AMOUNT, leastStockedTerminal.room.name);
         console.log("NETWORK: balancing terminal capacity, sending", RESERVE_AMOUNT, mostStockedResource,
             "from", this.room.name, "to", leastStockedTerminal.room.name);

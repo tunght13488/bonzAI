@@ -1,15 +1,15 @@
 import {empire} from "../helpers/loopHelper";
 
 export interface FindClosestOptions {
-    linearDistanceLimit?: number,
-    opsLimit?: number,
-    margin?: number,
-    byRoute?: boolean,
+    linearDistanceLimit?: number;
+    opsLimit?: number;
+    margin?: number;
+    byRoute?: boolean;
 }
 
 export class RoomHelper {
-    public static findClosest<T extends {pos: RoomPosition}>(origin: {pos: RoomPosition}, destinations: T[],
-                              options: FindClosestOptions = {}): {destination: T, distance: number}[] {
+    public static findClosest<T extends { pos: RoomPosition }>(origin: { pos: RoomPosition }, destinations: T[],
+                                                               options: FindClosestOptions = {}): Array<{ destination: T, distance: number }> {
 
         if (options.linearDistanceLimit === undefined) {
             options.linearDistanceLimit = 16; // pathfinder room search limit
@@ -19,29 +19,30 @@ export class RoomHelper {
             options.margin = 0;
         }
 
-        let totalCPU = Game.cpu.getUsed();
+        const totalCPU = Game.cpu.getUsed();
 
-        let filtered = _(destinations)
-            .filter( dest => Game.map.getRoomLinearDistance(origin.pos.roomName, dest.pos.roomName) <= options.linearDistanceLimit)
-            .sortBy( dest => Game.map.getRoomLinearDistance(origin.pos.roomName, dest.pos.roomName))
+        const filtered = _(destinations)
+            .filter(dest => Game.map.getRoomLinearDistance(origin.pos.roomName, dest.pos.roomName) <= options.linearDistanceLimit)
+            .sortBy(dest => Game.map.getRoomLinearDistance(origin.pos.roomName, dest.pos.roomName))
             .value();
 
-        let bestDestinations: {destination: T, distance: number}[] = [];
+        let bestDestinations: Array<{ destination: T, distance: number }> = [];
         let bestLinearDistance = Number.MAX_VALUE;
         let bestDistance = Number.MAX_VALUE;
-        for (let dest of filtered) {
-            let linearDistance = Game.map.getRoomLinearDistance(origin.pos.roomName, dest.pos.roomName);
+        for (const dest of filtered) {
+            const linearDistance = Game.map.getRoomLinearDistance(origin.pos.roomName, dest.pos.roomName);
             if (linearDistance > bestLinearDistance) {
                 continue;
             }
 
             let distance;
             if (options.byRoute) {
-                let route = empire.traveler.findRoute(origin.pos.roomName, dest.pos.roomName);
+                const route = empire.traveler.findRoute(origin.pos.roomName, dest.pos.roomName);
                 if (!route) { continue; }
                 distance = Object.keys(route).length;
-            } else {
-                let ret = empire.traveler.findTravelPath(origin, dest, {maxOps: options.opsLimit});
+            }
+            else {
+                const ret = empire.traveler.findTravelPath(origin, dest, {maxOps: options.opsLimit});
                 if (ret.incomplete) { continue; }
                 distance = ret.path.length;
             }
@@ -53,7 +54,7 @@ export class RoomHelper {
             }
 
             if (distance <= bestDistance + options.margin) {
-                bestDestinations.push({destination: dest, distance: distance});
+                bestDestinations.push({destination: dest, distance});
             }
         }
 

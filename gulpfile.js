@@ -11,7 +11,7 @@ const path = require('path');
 const PluginError = require('gulp-util').PluginError;
 const ts = require('gulp-typescript');
 const tslint = require('gulp-tslint');
-const tsProject = ts.createProject('tsconfig.json', { typescript: require('typescript') });
+const tsProject = ts.createProject('tsconfig.json', {typescript: require('typescript')});
 const webpack = require('webpack-stream');
 
 /********/
@@ -23,7 +23,7 @@ let config;
 try {
   config = require('./config.json');
 } catch (error) {
-  if (error.code == "MODULE_NOT_FOUND") {
+  if (error.code == 'MODULE_NOT_FOUND') {
     gutil.log(gutil.colors.red('ERROR'), 'Could not find file "config.json"');
   } else {
     gutil.log(error);
@@ -66,14 +66,14 @@ const buildConfig = config.targets[buildTarget];
 /* TASKS */
 /*********/
 
-gulp.task('lint', function(done) {
+gulp.task('lint', function (done) {
   if (buildConfig.lint) {
     gutil.log('linting ...');
     return gulp.src('src/**/*.ts')
-      .pipe(tslint({ formatter: 'prose' }))
+      .pipe(tslint({formatter: 'prose'}))
       .pipe(tslint.report({
         summarizeFailureOutput: true,
-        emitError: buildConfig.lintRequired === true
+        emitError: buildConfig.lintRequired === true,
       }));
   } else {
     gutil.log('skipped lint, according to config');
@@ -82,7 +82,7 @@ gulp.task('lint', function(done) {
 });
 
 gulp.task('clean', function () {
-  return gulp.src(['dist/tmp/', 'dist/' + buildTarget], { read: false, allowEmpty: true })
+  return gulp.src(['dist/tmp/', 'dist/' + buildTarget], {read: false, allowEmpty: true})
     .pipe(clean());
 });
 
@@ -106,13 +106,13 @@ gulp.task('compile-flattened', gulp.series(
     if (!global.compileFailed) {
       return done();
     }
-    throw new PluginError("gulp-typescript", "failed to compile: not executing further tasks");
+    throw new PluginError('gulp-typescript', 'failed to compile: not executing further tasks');
   },
   function flatten() {
     return gulp.src('dist/tmp/**/*.js')
       .pipe(gulpDotFlatten(0))
       .pipe(gulp.dest('dist/' + buildTarget));
-  }
+  },
 ));
 
 gulp.task('compile', gulp.series(buildConfig.bundle ? 'compile-bundled' : 'compile-flattened'));
@@ -123,7 +123,7 @@ gulp.task('upload', gulp.series('compile', function uploading() {
     .pipe(gulpScreepsUpload(config.user.email, config.user.password, buildConfig.branch, 0));
 }));
 
-gulp.task('copyLocal', gulp.series('compile', function() {
+gulp.task('copyLocal', gulp.series('compile', function () {
   return gulp.src('dist/dev/*')
     .pipe(gulp.dest(config.localPath));
 }));
@@ -131,7 +131,7 @@ gulp.task('copyLocal', gulp.series('compile', function() {
 
 gulp.task('watchUpload', function () {
   gulp.watch('src/**/*.ts', gulp.series('upload'))
-    .on('all', function(event, path, stats) {
+    .on('all', function (event, path, stats) {
       console.log('');
       gutil.log(gutil.colors.green('File ' + path + ' was ' + event + 'ed, running tasks...'));
     })
@@ -142,13 +142,13 @@ gulp.task('watchUpload', function () {
 
 gulp.task('watchLocal', function () {
   gulp.watch('src/**/*.ts', gulp.series('copyLocal'))
-      .on('all', function(event, path, stats) {
-        console.log('');
-        gutil.log(gutil.colors.green('File ' + path + ' was ' + event + 'ed, running tasks...'));
-      })
-      .on('error', function () {
-        gutil.log(gutil.colors.green('Error during build tasks: aborting'));
-      });
+    .on('all', function (event, path, stats) {
+      console.log('');
+      gutil.log(gutil.colors.green('File ' + path + ' was ' + event + 'ed, running tasks...'));
+    })
+    .on('error', function () {
+      gutil.log(gutil.colors.green('Error during build tasks: aborting'));
+    });
 });
 
 gulp.task('build', gulp.series('upload', function buildDone(done) {

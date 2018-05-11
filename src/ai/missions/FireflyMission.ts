@@ -1,8 +1,9 @@
-import {RaidMission} from "./RaidMission";
+import {BoostLevel, RaidData} from "../../interfaces";
 import {Operation} from "../operations/Operation";
-import {RaidData, BoostLevel} from "../../interfaces";
 import {SpawnGroup} from "../SpawnGroup";
 import {Agent} from "./Agent";
+import {RaidMission} from "./RaidMission";
+
 export class FireflyMission extends RaidMission {
 
     constructor(operation: Operation, name: string, raidData: RaidData, spawnGroup: SpawnGroup, boostLevel: number, allowSpawn: boolean) {
@@ -20,34 +21,34 @@ export class FireflyMission extends RaidMission {
         this.killCreeps = operation.memory.killCreeps;
     }
 
-    clearActions(attackingCreep: boolean) {
+    public clearActions(attackingCreep: boolean) {
         this.standardClearActions(attackingCreep);
     }
 
-    attackerBody = (): string[] => {
+    public attackerBody = (): string[] => {
         if (this.boostLevel === BoostLevel.Training) {
-            return this.configBody({ [TOUGH]: 1, [MOVE]: 2, [RANGED_ATTACK]: 1 });
+            return this.configBody({[TOUGH]: 1, [MOVE]: 2, [RANGED_ATTACK]: 1});
         }
         else if (this.boostLevel === BoostLevel.Unboosted) {
-            return this.configBody({ [TOUGH]: 5, [MOVE]: 25, [RANGED_ATTACK]: 20 });
+            return this.configBody({[TOUGH]: 5, [MOVE]: 25, [RANGED_ATTACK]: 20});
         }
         else if (this.boostLevel === BoostLevel.SuperTough) {
-            return this.configBody({ [TOUGH]: 24, [MOVE]: 10, [RANGED_ATTACK]: 16 });
+            return this.configBody({[TOUGH]: 24, [MOVE]: 10, [RANGED_ATTACK]: 16});
         }
         else if (this.boostLevel === BoostLevel.RCL7) {
-            return this.configBody({ [TOUGH]: 12, [MOVE]: 8, [RANGED_ATTACK]: 20 });
+            return this.configBody({[TOUGH]: 12, [MOVE]: 8, [RANGED_ATTACK]: 20});
         }
         else {
-            return this.configBody({ [TOUGH]: 12, [MOVE]: 10, [RANGED_ATTACK]: 28});
+            return this.configBody({[TOUGH]: 12, [MOVE]: 10, [RANGED_ATTACK]: 28});
         }
     };
 
     protected focusCreeps() {
-        let closest = this.attacker.pos.findClosestByRange(_.filter(this.attacker.room.hostiles, (c: Creep) => {
+        const closest = this.attacker.pos.findClosestByRange(_.filter(this.attacker.room.hostiles, (c: Creep) => {
             return c.owner.username !== "Source Keeper" && c.body.length > 10;
         }));
         if (closest) {
-            let range = this.attacker.pos.getRangeTo(closest);
+            const range = this.attacker.pos.getRangeTo(closest);
             if (range > 3) {
                 Agent.squadTravel(this.attacker, this.healer, closest);
             }

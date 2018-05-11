@@ -1,4 +1,3 @@
-import {Profiler} from "../Profiler";
 /**
  * To start using Traveler, require it in main.js:
  * Example: var Traveler = require('Traveler.js');
@@ -26,7 +25,7 @@ export interface TravelToOptions {
     allowHostile?: boolean;
     allowSK?: boolean;
     range?: number;
-    obstacles?: {pos: RoomPosition}[];
+    obstacles?: Array<{ pos: RoomPosition }>;
     roomCallback?: (roomName: string, matrix: CostMatrix) => CostMatrix | boolean;
     routeCallback?: (roomName: string) => number;
     returnData?: { nextPos: RoomPosition; };
@@ -64,21 +63,21 @@ const DEFAULT_STUCK_VALUE = 5;
 
 export class Traveler {
 
-    private structureMatrixCache: {[roomName: number]: CostMatrix} = {};
-    private creepMatrixCache: {[roomName: string]: CostMatrix} = {};
+    private structureMatrixCache: { [roomName: number]: CostMatrix } = {};
+    private creepMatrixCache: { [roomName: string]: CostMatrix } = {};
     private creepMatrixTick: number;
     private structureMatrixTick: number;
 
     public findRoute(origin: string, destination: string,
-                     options: TravelToOptions = {}): {[roomName: string]: boolean } {
-        _.defaults(options, { restrictDistance: 16 });
+                     options: TravelToOptions = {}): { [roomName: string]: boolean } {
+        _.defaults(options, {restrictDistance: 16});
         if (Game.map.getRoomLinearDistance(origin, destination) > options.restrictDistance) { return; }
-        let allowedRooms = { [ origin ]: true, [ destination ]: true };
-        let ret = Game.map.findRoute(origin, destination, {
+        const allowedRooms = {[origin]: true, [destination]: true};
+        const ret = Game.map.findRoute(origin, destination, {
             routeCallback: (roomName: string) => {
 
                 if (options.routeCallback) {
-                    let outcome = options.routeCallback(roomName);
+                    const outcome = options.routeCallback(roomName);
                     if (outcome !== undefined) {
                         return outcome;
                     }
@@ -88,7 +87,7 @@ export class Traveler {
                 let parsed;
                 if (options.preferHighway) {
                     parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(roomName) as any;
-                    let isHighway = (parsed[1] % 10 === 0) || (parsed[2] % 10 === 0);
+                    const isHighway = (parsed[1] % 10 === 0) || (parsed[2] % 10 === 0);
                     if (isHighway) {
                         return 1;
                     }
@@ -96,9 +95,9 @@ export class Traveler {
                 // SK rooms are avoided when there is no vision in the room, harvested-from SK rooms are allowed
                 if (!options.allowSK && !Game.rooms[roomName]) {
                     if (!parsed) { parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(roomName) as any; }
-                    let fMod = parsed[1] % 10;
-                    let sMod = parsed[2] % 10;
-                    let isSK =  !(fMod === 5 && sMod === 5) &&
+                    const fMod = parsed[1] % 10;
+                    const sMod = parsed[2] % 10;
+                    const isSK = !(fMod === 5 && sMod === 5) &&
                         ((fMod >= 4) && (fMod <= 6)) &&
                         ((sMod >= 4) && (sMod <= 6));
                     if (isSK) {
@@ -117,26 +116,26 @@ export class Traveler {
             console.log(`couldn't findRoute to ${destination}`);
             return;
         }
-        for (let value of ret) {
+        for (const value of ret) {
             allowedRooms[value.room] = true;
         }
 
         return allowedRooms;
     }
 
-    routeDistance(origin: string, destination: string): number {
-        let linearDistance = Game.map.getRoomLinearDistance(origin, destination);
+    public routeDistance(origin: string, destination: string): number {
+        const linearDistance = Game.map.getRoomLinearDistance(origin, destination);
         if (linearDistance >= 20) {
             return linearDistance;
         }
 
-        let allowedRooms = this.findRoute(origin, destination);
+        const allowedRooms = this.findRoute(origin, destination);
         if (allowedRooms) {
             return Object.keys(allowedRooms).length;
         }
     }
 
-    public findTravelPath(origin: {pos: RoomPosition}, destination: {pos: RoomPosition},
+    public findTravelPath(origin: { pos: RoomPosition }, destination: { pos: RoomPosition },
                           options: TravelToOptions = {}): PathfinderReturn {
         _.defaults(options, {
             ignoreCreeps: true,
@@ -155,38 +154,41 @@ export class Traveler {
             allowedRooms = this.findRoute(origin.pos.roomName, destination.pos.roomName, options);
         }
 
-        let callback = (roomName: string): CostMatrix | boolean => {
+        const callback = (roomName: string): CostMatrix | boolean => {
 
             if (allowedRooms) {
                 if (!allowedRooms[roomName]) {
                     return false;
                 }
-            } else if (!options.allowHostile && Traveler.checkOccupied(roomName)) {
+            }
+            else if (!options.allowHostile && Traveler.checkOccupied(roomName)) {
                 return false;
             }
 
             let matrix: CostMatrix;
-            let room = Game.rooms[roomName];
+            const room = Game.rooms[roomName];
             if (room) {
                 if (options.ignoreStructures) {
                     matrix = new PathFinder.CostMatrix();
                     if (!options.ignoreCreeps) {
                         Traveler.addCreepsToMatrix(room, matrix);
                     }
-                } else if (options.ignoreCreeps || roomName !== origin.pos.roomName) {
+                }
+                else if (options.ignoreCreeps || roomName !== origin.pos.roomName) {
                     matrix = this.getStructureMatrix(room, options.freshMatrix);
-                } else {
+                }
+                else {
                     matrix = this.getCreepMatrix(room);
                 }
 
-                for (let obstacle of options.obstacles) {
+                for (const obstacle of options.obstacles) {
                     matrix.set(obstacle.pos.x, obstacle.pos.y, 0xff);
                 }
             }
 
             if (options.roomCallback) {
                 if (!matrix) { matrix = new PathFinder.CostMatrix(); }
-                let outcome = options.roomCallback(roomName, matrix.clone());
+                const outcome = options.roomCallback(roomName, matrix.clone());
                 if (outcome !== undefined) {
                     return outcome;
                 }
@@ -200,10 +202,10 @@ export class Traveler {
             plainCost: options.offRoad ? 1 : options.ignoreRoads ? 1 : 2,
             swampCost: options.offRoad ? 1 : options.ignoreRoads ? 5 : 10,
             roomCallback: callback,
-        } );
+        });
     }
 
-    public travelTo(creep: Creep, destination: {pos: RoomPosition}, options: TravelToOptions = {}): number {
+    public travelTo(creep: Creep, destination: { pos: RoomPosition }, options: TravelToOptions = {}): number {
 
         /* uncomment if you would like to register hostile rooms entered
         if (creep.room.controller) {
@@ -219,7 +221,7 @@ export class Traveler {
         if (!creep.memory._travel) {
             creep.memory._travel = {stuck: 0, tick: Game.time, cpu: 0, count: 0} as TravelData;
         }
-        let travelData: TravelData = creep.memory._travel;
+        const travelData: TravelData = creep.memory._travel;
 
         if (creep.fatigue > 0) {
             travelData.tick = Game.time;
@@ -231,10 +233,11 @@ export class Traveler {
         }
 
         // manage case where creep is nearby destination
-        let rangeToDestination = creep.pos.getRangeTo(destination);
+        const rangeToDestination = creep.pos.getRangeTo(destination);
         if (rangeToDestination <= options.range) {
             return OK;
-        } else if (rangeToDestination <= 1) {
+        }
+        else if (rangeToDestination <= 1) {
             if (rangeToDestination === 1 && !options.range) {
                 if (options.returnData) { options.returnData.nextPos = destination.pos; }
                 return creep.move(creep.pos.getDirectionTo(destination));
@@ -249,7 +252,8 @@ export class Traveler {
             if (creep.pos.inRangeTo(travelData.prev, 0)) {
                 hasMoved = false;
                 travelData.stuck++;
-            } else {
+            }
+            else {
                 travelData.stuck = 0;
             }
         }
@@ -262,7 +266,6 @@ export class Traveler {
             delete travelData.path;
         }
 
-
         // handle case where creep wasn't traveling last tick and may have moved, but destination is still the same
         if (Game.time - travelData.tick > 1 && hasMoved) {
             delete travelData.path;
@@ -273,11 +276,12 @@ export class Traveler {
         if (!travelData.dest || travelData.dest.x !== destination.pos.x || travelData.dest.y !== destination.pos.y ||
             travelData.dest.roomName !== destination.pos.roomName) {
             if (travelData.dest && options.movingTarget) {
-                let dest = Traveler.initPosition(travelData.dest);
+                const dest = Traveler.initPosition(travelData.dest);
                 if (dest.isNearTo(destination)) {
                     travelData.path += dest.getDirectionTo(destination);
                     travelData.dest = destination.pos;
-                } else {
+                }
+                else {
                     delete travelData.path;
                 }
             }
@@ -292,7 +296,7 @@ export class Traveler {
 
             travelData.dest = destination.pos;
             travelData.prev = undefined;
-            let cpu = Game.cpu.getUsed();
+            const cpu = Game.cpu.getUsed();
             let ret = this.findTravelPath(creep, destination, options);
             travelData.cpu += (Game.cpu.getUsed() - cpu);
             travelData.count++;
@@ -320,14 +324,14 @@ export class Traveler {
             travelData.path = travelData.path.substr(1);
         }
         travelData.prev = creep.pos;
-        let nextDirection = parseInt(travelData.path[0], 10);
+        const nextDirection = parseInt(travelData.path[0], 10);
         if (options.returnData) { options.returnData.nextPos = Traveler.positionAtDirection(creep.pos, nextDirection); }
         return creep.move(nextDirection);
     }
 
     // unused and untested so far
-    public generateCachedPath(origin: {pos: RoomPosition}, destination: {pos: RoomPosition}): CachedPath {
-        let ret = this.findTravelPath(origin, destination);
+    public generateCachedPath(origin: { pos: RoomPosition }, destination: { pos: RoomPosition }): CachedPath {
+        const ret = this.findTravelPath(origin, destination);
         if (ret.incomplete) {
             console.log(`TRAVELER: cachedPath generation incomplete, ${origin.pos} -> ${destination.pos}, ${ret.ops}`);
             return;
@@ -342,38 +346,40 @@ export class Traveler {
 
     // unused and untested so far
     public travelByCachedPath(creep: Creep, cachedPath: CachedPath) {
-        if (!creep.memory._ctrav) { creep.memory._ctrav =  { progress: 0, phase: 0 }; }
-        let travelData = creep.memory._ctrav as CachedTravelData;
+        if (!creep.memory._ctrav) { creep.memory._ctrav = {progress: 0, phase: 0}; }
+        const travelData = creep.memory._ctrav as CachedTravelData;
 
         if (travelData.tempDest) {
-            let tempDest = Traveler.initPosition(travelData.tempDest);
+            const tempDest = Traveler.initPosition(travelData.tempDest);
             if (creep.pos.inRangeTo(tempDest, 0)) {
                 delete travelData.tempDest;
-            } else {
+            }
+            else {
                 return this.travelTo(creep, {pos: tempDest});
             }
         }
 
         if (travelData.phase === 0) {
-            let startPos = Traveler.initPosition(cachedPath.start);
+            const startPos = Traveler.initPosition(cachedPath.start);
             if (creep.pos.inRangeTo(startPos, 0)) {
                 travelData.phase++;
                 travelData.progress = 0;
-            } else {
+            }
+            else {
                 travelData.tempDest = startPos;
                 return this.travelByCachedPath(creep, cachedPath);
             }
         }
 
         if (travelData.phase === 1) {
-            let nextDirection = cachedPath.path[travelData.progress]
+            const nextDirection = cachedPath.path[travelData.progress];
         }
     }
 
     public getStructureMatrix(room: Room, freshMatrix?: boolean): CostMatrix {
         if (!this.structureMatrixCache[room.name] || (freshMatrix && Game.time !== this.structureMatrixTick)) {
             this.structureMatrixTick = Game.time;
-            let matrix = new PathFinder.CostMatrix();
+            const matrix = new PathFinder.CostMatrix();
             this.structureMatrixCache[room.name] = Traveler.addStructuresToMatrix(room, matrix, 1);
         }
         return this.structureMatrixCache[room.name];
@@ -385,27 +391,30 @@ export class Traveler {
 
     public static addStructuresToMatrix(room: Room, matrix: CostMatrix, roadCost: number): CostMatrix {
 
-        let impassibleStructures: Structure[] = [];
-        for (let structure of room.find<Structure>(FIND_STRUCTURES)) {
+        const impassibleStructures: Structure[] = [];
+        for (const structure of room.find<Structure>(FIND_STRUCTURES)) {
             if (structure instanceof StructureRampart) {
                 if (!structure.my) {
                     impassibleStructures.push(structure);
                 }
-            } else if (structure instanceof StructureRoad) {
+            }
+            else if (structure instanceof StructureRoad) {
                 matrix.set(structure.pos.x, structure.pos.y, roadCost);
-            } else if (structure instanceof StructureContainer) {
+            }
+            else if (structure instanceof StructureContainer) {
                 matrix.set(structure.pos.x, structure.pos.y, 5);
-            } else {
+            }
+            else {
                 impassibleStructures.push(structure);
             }
         }
 
-        for (let site of room.find<ConstructionSite>(FIND_CONSTRUCTION_SITES)) {
+        for (const site of room.find<ConstructionSite>(FIND_CONSTRUCTION_SITES)) {
             if (site.structureType === STRUCTURE_CONTAINER || site.structureType === STRUCTURE_ROAD) { continue; }
             matrix.set(site.pos.x, site.pos.y, 0xff);
         }
 
-        for (let structure of impassibleStructures) {
+        for (const structure of impassibleStructures) {
             matrix.set(structure.pos.x, structure.pos.y, 0xff);
         }
 
@@ -422,17 +431,20 @@ export class Traveler {
     }
 
     public static addCreepsToMatrix(room: Room, matrix: CostMatrix): CostMatrix {
-        room.find<Creep>(FIND_CREEPS).forEach((creep: Creep) => matrix.set(creep.pos.x, creep.pos.y, 0xff) );
+        room.find<Creep>(FIND_CREEPS).forEach((creep: Creep) => matrix.set(creep.pos.x, creep.pos.y, 0xff));
         return matrix;
     }
 
     public static serializePath(startPos: RoomPosition, path: RoomPosition[], display = true): string {
         let serializedPath = "";
         let lastPosition = startPos;
-        for (let position of path) {
+        for (const position of path) {
             if (position.roomName === lastPosition.roomName) {
                 if (display) {
-                    new RoomVisual(position.roomName).line(position, lastPosition, {color: 'orange', lineStyle: 'dashed'});
+                    new RoomVisual(position.roomName).line(position, lastPosition, {
+                        color: "orange",
+                        lineStyle: "dashed",
+                    });
                 }
                 serializedPath += lastPosition.getDirectionTo(position);
             }
@@ -442,8 +454,8 @@ export class Traveler {
     }
 
     private static positionAtDirection(origin: RoomPosition, direction: number): RoomPosition {
-        let offsetX = [0, 0, 1, 1, 1, 0, -1, -1, -1];
-        let offsetY = [0, -1, -1, 0, 1, 1, 1, 0, -1];
+        const offsetX = [0, 0, 1, 1, 1, 0, -1, -1, -1];
+        const offsetY = [0, -1, -1, 0, 1, 1, 1, 0, -1];
         return new RoomPosition(origin.x + offsetX[direction], origin.y + offsetY[direction], origin.roomName);
     }
 

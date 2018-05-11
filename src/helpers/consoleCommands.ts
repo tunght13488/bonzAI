@@ -1,13 +1,13 @@
 import {Empire} from "../ai/Empire";
 import {Operation} from "../ai/operations/Operation";
-import {helper} from "./helper";
 import {MINERALS_RAW, PRODUCT_LIST} from "../ai/TradeNetwork";
-import {empire} from "./loopHelper";
 import {WorldMap} from "../ai/WorldMap";
+import {helper} from "./helper";
+import {empire} from "./loopHelper";
 
 declare var emp: Empire;
 
-export var consoleCommands = {
+export let consoleCommands = {
 
     /**
      * Remove construction sites from a missionRoom
@@ -17,11 +17,12 @@ export var consoleCommands = {
      */
 
     removeConstructionSites(roomName: string, leaveProgressStarted = true, structureType?: string) {
-        Game.rooms[roomName].find(FIND_MY_CONSTRUCTION_SITES).forEach( (site: ConstructionSite) => {
-            if ((!structureType || site.structureType === structureType) &&(!leaveProgressStarted || site.progress === 0)) {
+        Game.rooms[roomName].find(FIND_MY_CONSTRUCTION_SITES).forEach((site: ConstructionSite) => {
+            if ((!structureType || site.structureType === structureType) &&
+                (!leaveProgressStarted || site.progress === 0)) {
                 site.remove();
             }
-        })
+        });
     },
     // shorthand
     rc(roomName: string, leaveProgressStarted: boolean, structureType: string) {
@@ -34,12 +35,12 @@ export var consoleCommands = {
      */
 
     removeFlags(substr: string) {
-      _.forEach(Game.flags, (flag) => {
-          if (_.includes(flag.name, substr) ) {
-              console.log(`removing flag ${flag.name} in ${flag.pos.roomName}`);
-              flag.remove();
-          }
-      });
+        _.forEach(Game.flags, flag => {
+            if (_.includes(flag.name, substr)) {
+                console.log(`removing flag ${flag.name} in ${flag.pos.roomName}`);
+                flag.remove();
+            }
+        });
     },
     // shorthand
     rf(substr: string) {
@@ -51,7 +52,7 @@ export var consoleCommands = {
      */
 
     minv() {
-        for (let mineralType of MINERALS_RAW) {
+        for (const mineralType of MINERALS_RAW) {
             console.log(mineralType + ":", empire.network.inventory[mineralType]);
         }
 
@@ -62,21 +63,21 @@ export var consoleCommands = {
      */
 
     pinv() {
-        for (let mineralType of PRODUCT_LIST) {
+        for (const mineralType of PRODUCT_LIST) {
             console.log(mineralType + ":", emp.network.inventory[mineralType]);
         }
     },
 
     /**
-     * remove most memory while leaving more important stuff intact, strongly not recommended unless you know what you are
-     * doing
+     * remove most memory while leaving more important stuff intact, strongly not recommended unless you know what you
+     * are doing
      */
 
     wipeMemory() {
-        for (let flagName in Memory.flags) {
-            let flag = Game.flags[flagName];
+        for (const flagName in Memory.flags) {
+            const flag = Game.flags[flagName];
             if (flag) {
-                for (let propertyName of Object.keys(flag.memory)) {
+                for (const propertyName of Object.keys(flag.memory)) {
                     if (propertyName === "power") continue;
                     if (propertyName === "centerPosition") continue;
                     if (propertyName === "rotation") continue;
@@ -90,8 +91,8 @@ export var consoleCommands = {
             }
         }
 
-        for (let creepName in Memory.creeps) {
-            let creep = Game.creeps[creepName];
+        for (const creepName in Memory.creeps) {
+            const creep = Game.creeps[creepName];
             if (!creep) {
                 delete Memory.creeps[creepName];
             }
@@ -105,37 +106,37 @@ export var consoleCommands = {
     removeUnusedProperties() {
 
         let hostiles = false;
-        if (Memory.empire["hostileRooms"]) {
+        if (Memory.empire.hostileRooms) {
             hostiles = true;
-            delete Memory.empire["hostileRooms"];
+            delete Memory.empire.hostileRooms;
         }
 
         let radarCount = 0;
         let spawnCount = 0;
         let analCount = 0;
         let flagCount = 0;
-        for (let flagName in Memory.flags) {
-            let flag = Game.flags[flagName];
+        for (const flagName in Memory.flags) {
+            const flag = Game.flags[flagName];
             if (flag) {
-                let flagMemory = Memory.flags[flagName];
-                for (let missionName in flagMemory) {
+                const flagMemory = Memory.flags[flagName];
+                for (const missionName in flagMemory) {
                     if (!flagMemory.hasOwnProperty(missionName)) { continue; }
-                    let missionMemory = flagMemory[missionName];
+                    const missionMemory = flagMemory[missionName];
                     if (missionName === "radar") {
                         radarCount++;
                         delete flagMemory[missionName];
                     }
-                    if (missionMemory["spawn"]) {
+                    if (missionMemory.spawn) {
                         spawnCount++;
-                        delete missionMemory["spawn"];
+                        delete missionMemory.spawn;
                     }
-                    if (missionMemory["anal"]) { // :)
+                    if (missionMemory.anal) { // :)
                         analCount++;
-                        delete missionMemory["anal"];
+                        delete missionMemory.anal;
                     }
                     if (missionName === "bodyguard" || missionName === "defense") {
-                        delete missionMemory["invaderProbable"];
-                        delete missionMemory["invaderTrack"];
+                        delete missionMemory.invaderProbable;
+                        delete missionMemory.invaderTrack;
                     }
                 }
             }
@@ -146,8 +147,8 @@ export var consoleCommands = {
         }
 
         let creepCount = 0;
-        for (let creepName in Memory.creeps) {
-            let creep = Game.creeps[creepName];
+        for (const creepName in Memory.creeps) {
+            const creep = Game.creeps[creepName];
             if (!creep) {
                 creepCount++;
                 delete Memory.creeps[creepName];
@@ -155,11 +156,11 @@ export var consoleCommands = {
         }
 
         return `gc Creeps: ${creepCount}, gc flags: ${flagCount}, spawn: ${spawnCount}, radar: ${radarCount}\n` +
-                `analysis: ${analCount}, hostileRooms: ${hostiles}`
+            `analysis: ${analCount}, hostileRooms: ${hostiles}`;
     },
 
     removeMissionData(missionName: string) {
-        for (let flagName in Memory.flags) {
+        for (const flagName in Memory.flags) {
             delete Memory.flags[flagName][missionName];
         }
     },
@@ -170,13 +171,12 @@ export var consoleCommands = {
      */
 
     findResource(resourceType: string) {
-        for (let terminal of empire.network.terminals) {
+        for (const terminal of empire.network.terminals) {
             if (terminal.store[resourceType]) {
                 console.log(terminal.room.name, terminal.store[resourceType]);
             }
         }
     },
-
 
     /**
      * Empty resources from a terminal, will only try to send one resource each tick so this must be called repeatedly
@@ -187,20 +187,20 @@ export var consoleCommands = {
      */
 
     emptyTerminal(origin: string, destination: string) {
-        let originTerminal = Game.rooms[origin].terminal;
+        const originTerminal = Game.rooms[origin].terminal;
         let outcome;
-        for (let resourceType in originTerminal.store) {
+        for (const resourceType in originTerminal.store) {
             if (!originTerminal.store.hasOwnProperty(resourceType)) continue;
-            let amount = originTerminal.store[resourceType];
+            const amount = originTerminal.store[resourceType];
             if (amount >= 100) {
                 if (resourceType !== RESOURCE_ENERGY) {
                     outcome = originTerminal.send(resourceType, amount, destination);
                     break;
                 }
-                else if (Object.keys(originTerminal.store).length === 1 ) {
-                    let distance = Game.map.getRoomLinearDistance(origin, destination, true);
-                    let stored = originTerminal.store.energy;
-                    let amountSendable = Math.floor(stored / (1 + 0.1 * distance));
+                else if (Object.keys(originTerminal.store).length === 1) {
+                    const distance = Game.map.getRoomLinearDistance(origin, destination, true);
+                    const stored = originTerminal.store.energy;
+                    const amountSendable = Math.floor(stored / (1 + 0.1 * distance));
                     console.log("sending", amountSendable, "out of", stored);
                     outcome = originTerminal.send(RESOURCE_ENERGY, amountSendable, destination);
                 }
@@ -218,11 +218,11 @@ export var consoleCommands = {
      */
 
     changeOpName(opName: string, newOpName: string) {
-        let operation = Game.operations[opName] as Operation;
+        const operation = Game.operations[opName] as Operation;
         if (!operation) return "you don't have an operation by that name";
 
-        let newFlagName = operation.type + "_" + newOpName;
-        let outcome = operation.flag.pos.createFlag(newFlagName, operation.flag.color, operation.flag.secondaryColor);
+        const newFlagName = operation.type + "_" + newOpName;
+        const outcome = operation.flag.pos.createFlag(newFlagName, operation.flag.color, operation.flag.secondaryColor);
         if (_.isString(outcome)) {
             Memory.flags[newFlagName] = operation.memory;
             operation.flag.remove();
@@ -238,12 +238,12 @@ export var consoleCommands = {
      * @param resourceType
      * @param amount
      * @param roomName
-     * @param efficiency - the number of terminals that should send the resource per tick, use a lower number to only send
-     * from the nearest terminals
+     * @param efficiency - the number of terminals that should send the resource per tick, use a lower number to only
+     *     send from the nearest terminals
      * @returns {any}
      */
 
-    order(resourceType: string, amount: number, roomName: string, efficiency = 10 ) {
+    order(resourceType: string, amount: number, roomName: string, efficiency = 10) {
         if (!(amount > 0)) {
             return "usage: order(resourceType, amount, roomName, efficiency?)";
         }
@@ -256,8 +256,10 @@ export var consoleCommands = {
             return "efficiency must be >= 1";
         }
 
-        Memory.resourceOrder[Game.time] = { resourceType: resourceType, amount: amount, roomName: roomName,
-            efficiency: efficiency, amountSent: 0};
+        Memory.resourceOrder[Game.time] = {
+            resourceType, amount, roomName,
+            efficiency, amountSent: 0,
+        };
         return "TRADE: scheduling " + amount + " " + resourceType + " to be sent to " + roomName;
     },
 
@@ -271,25 +273,25 @@ export var consoleCommands = {
     sendFromAll(resourceType: string, amount: number, roomName: string) {
         _.forEach(Game.rooms, (room: Room) => {
             if (room.controller && room.controller.level > 6 && room.terminal && room.terminal.my) {
-                let outcome = room.terminal.send(resourceType, amount, roomName)
-                console.log(room.name, " sent ",amount," to ",roomName);
+                room.terminal.send(resourceType, amount, roomName);
+                console.log(room.name, " sent ", amount, " to ", roomName);
             }
-        })
+        });
     },
 
     patchTraderMemory() {
-        for (let username in Memory.traders) {
-            let data = Memory.traders[username] as any;
+        for (const username in Memory.traders) {
+            const data = Memory.traders[username] as any;
             if (data.recieved) {
-                for (let resourceType in data.recieved) {
-                    let amount = data.recieved[resourceType];
+                for (const resourceType in data.recieved) {
+                    const amount = data.recieved[resourceType];
                     if (data[resourceType] === undefined) data[resourceType] = 0;
                     data[resourceType] += amount;
                 }
             }
             if (data.sent) {
-                for (let resourceType in data.sent) {
-                    let amount = data.sent[resourceType];
+                for (const resourceType in data.sent) {
+                    const amount = data.sent[resourceType];
                     if (data[resourceType] === undefined) data[resourceType] = 0;
                     data[resourceType] -= amount;
                 }
@@ -302,24 +304,24 @@ export var consoleCommands = {
     /**
      * If this looks silly it is because it is, I used to it go from one naming convention to another
      * @param opName
+     * @param alternate
      * @returns {any}
      */
-
     roomConvention(opName: string, alternate?: string): string {
-        let controllerOp = Game.operations[opName + 0];
+        const controllerOp = Game.operations[opName + 0];
         if (!controllerOp) {
             return "owned missionRoom doesn't exist";
         }
 
         for (let direction = 1; direction <= 8; direction++) {
-            let tempName = opName + "temp" + direction;
+            const tempName = opName + "temp" + direction;
             if (!Game.operations[tempName]) continue;
             console.log(`found temp ${tempName}`);
-            let desiredName = opName + direction;
-            let currentOp = Game.operations[desiredName];
+            const desiredName = opName + direction;
+            const currentOp = Game.operations[desiredName];
             if (currentOp) {
                 console.log(`current op with that name, changing name to temp`);
-                let tempDir = WorldMap.findRelativeRoomDir(controllerOp.flag.room.name, currentOp.flag.room.name);
+                const tempDir = WorldMap.findRelativeRoomDir(controllerOp.flag.room.name, currentOp.flag.room.name);
                 return this.changeOpName(desiredName, opName + "temp" + tempDir);
             }
             console.log(`no temp conflicts`);
@@ -336,14 +338,14 @@ export var consoleCommands = {
                 }
             }
             if (!testOp) { continue; }
-            let correctDir = WorldMap.findRelativeRoomDir(controllerOp.flag.room.name, testOp.flag.room.name);
+            const correctDir = WorldMap.findRelativeRoomDir(controllerOp.flag.room.name, testOp.flag.room.name);
             if (correctDir === direction) { continue; }
-            let correctOpName = opName + correctDir;
+            const correctOpName = opName + correctDir;
             console.log(`inconsistent name (${testOpName} at dir ${correctDir} should be ${correctOpName})`);
-            let currentOp = Game.operations[correctOpName];
+            const currentOp = Game.operations[correctOpName];
             if (currentOp) {
                 console.log(`current op with that name, changing name to temp`);
-                let tempDir = WorldMap.findRelativeRoomDir(controllerOp.flag.room.name, currentOp.flag.room.name);
+                const tempDir = WorldMap.findRelativeRoomDir(controllerOp.flag.room.name, currentOp.flag.room.name);
                 return this.changeOpName(correctOpName, opName + "temp" + tempDir);
             }
             else {
@@ -356,26 +358,26 @@ export var consoleCommands = {
     },
 
     test(from: string, to: string) {
-        let fromPos = helper.pathablePosition(from);
-        let toPos = helper.pathablePosition(to);
-        let consideredRooms = {};
+        const fromPos = helper.pathablePosition(from);
+        const toPos = helper.pathablePosition(to);
+        const consideredRooms = {};
         let firstCPU = Game.cpu.getUsed();
-        let ret = PathFinder.search(fromPos, toPos, {
+        const ret = PathFinder.search(fromPos, toPos, {
             maxOps: 20000,
-            roomCallback: (roomName) => consideredRooms[roomName] = true
+            roomCallback: roomName => consideredRooms[roomName] = true,
         });
         firstCPU = Game.cpu.getUsed() - firstCPU;
-        let consideredRooms2 = {};
+        const consideredRooms2 = {};
         let secondCPU = Game.cpu.getUsed();
-        let range = Game.map.getRoomLinearDistance(from, to);
-        let ret2 = PathFinder.search(fromPos, toPos, {
+        const range = Game.map.getRoomLinearDistance(from, to);
+        const ret2 = PathFinder.search(fromPos, toPos, {
             maxOps: 20000,
-            roomCallback: (roomName) => {
+            roomCallback: roomName => {
                 if (Game.map.getRoomLinearDistance(roomName, to) > range) {
                     return false;
                 }
                 consideredRooms2[roomName] = true;
-            }
+            },
         });
         secondCPU = Game.cpu.getUsed() - secondCPU;
         return `First path:\n` +
@@ -394,12 +396,12 @@ export var consoleCommands = {
     },
 
     testCPU() {
-        let iterations = 1000;
+        const iterations = 1000;
         let cpu = Game.cpu.getUsed();
         for (let i = 0; i < iterations; i++) {
             // nothing
         }
-        let baseline = Game.cpu.getUsed() - cpu;
+        const baseline = Game.cpu.getUsed() - cpu;
         cpu = Game.cpu.getUsed();
         for (let i = 0; i < iterations; i++) {
             Game.map.getRoomLinearDistance("W25S25", "E25S25");
@@ -409,13 +411,13 @@ export var consoleCommands = {
 
     resetPathCPU() {
         let count = 0;
-        for (let creepName in Game.creeps) {
-            let creep = Game.creeps[creepName];
+        for (const creepName in Game.creeps) {
+            const creep = Game.creeps[creepName];
             if (creep.memory._travel) {
                 count++;
                 creep.memory._travel.cpu = 0;
             }
         }
-        return `reset cpu for ${count} creeps`
+        return `reset cpu for ${count} creeps`;
     },
 };

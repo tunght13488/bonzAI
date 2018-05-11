@@ -11,7 +11,7 @@ export class HostileAgent {
     public fatigue: number;
     public memory: HostileMemory;
 
-    public potentials: {[partType: string]: number};
+    public potentials: { [partType: string]: number };
 
     constructor(creep: Creep) {
         this.creep = creep;
@@ -27,13 +27,15 @@ export class HostileAgent {
         if (!Memory.hostileMemory[creep.id]) { Memory.hostileMemory[creep.id] = {} as HostileMemory; }
         this.memory = Memory.hostileMemory[creep.id];
 
-        if (!this.memory.potentials) { this.memory.potentials = this.findPotentials();}
+        if (!this.memory.potentials) { this.memory.potentials = this.findPotentials(); }
         this.potentials = this.memory.potentials;
     }
+
     public getActiveBodyparts(type: string): number { return this.creep.getActiveBodyparts(type); }
-    public expectedDamage(place: {pos: RoomPosition}): number {
+
+    public expectedDamage(place: { pos: RoomPosition }): number {
         let damage = 0;
-        let range = this.pos.getRangeTo(place);
+        const range = this.pos.getRangeTo(place);
         if (range <= 3) {
             damage += this.potentials[RANGED_ATTACK];
         }
@@ -43,23 +45,23 @@ export class HostileAgent {
         return damage;
     }
 
-    private findPotentials(): {[partType: string]: number} {
+    private findPotentials(): { [partType: string]: number } {
 
-        let potentials = {
+        const potentials = {
             [RANGED_ATTACK]: 0,
             [HEAL]: 0,
             [ATTACK]: 0,
             [WORK]: 0,
         };
 
-        let unitPotential = {
+        const unitPotential = {
             [RANGED_ATTACK]: RANGED_ATTACK_POWER,
             [ATTACK]: ATTACK_POWER,
             [HEAL]: HEAL_POWER,
             [WORK]: DISMANTLE_POWER,
         };
 
-        for (let part of this.creep.body) {
+        for (const part of this.creep.body) {
             if (unitPotential[part.type]) {
                 let potential = unitPotential[part.type];
                 if (part.boost) { potential *= 4; }

@@ -1,40 +1,38 @@
-import {Operation} from "./Operation";
-import {Empire} from "../Empire";
-import {ScoutMission} from "../missions/ScoutMission";
+import {MAX_HARVEST_DISTANCE} from "../../config/constants";
+import {EnhancedBodyguardMission} from "../missions/EnhancedBodyguardMission";
+import {GeologyMission} from "../missions/GeologyMission";
+import {InvaderGuru} from "../missions/InvaderGuru";
+import {LairMission} from "../missions/LairMission";
 import {MiningMission} from "../missions/MiningMission";
 import {RemoteBuildMission} from "../missions/RemoteBuildMission";
-import {GeologyMission} from "../missions/GeologyMission";
-import {LairMission} from "../missions/LairMission";
-import {EnhancedBodyguardMission} from "../missions/EnhancedBodyguardMission";
-import {InvaderGuru} from "../missions/InvaderGuru";
-import {MAX_HARVEST_DISTANCE, MAX_HARVEST_PATH} from "../../config/constants";
-export class KeeperOperation extends Operation {
+import {ScoutMission} from "../missions/ScoutMission";
+import {Operation} from "./Operation";
 
+export class KeeperOperation extends Operation {
     /**
-     * Remote mining, spawns Scout if there is no vision, spawns a MiningMission for each source in the missionRoom. Can also
-     * mine minerals from core rooms
+     * Remote mining, spawns Scout if there is no vision, spawns a MiningMission for each source in the missionRoom.
+     * Can also mine minerals from core rooms
      * @param flag
      * @param name
      * @param type
      * @param empire
      */
-
     constructor(flag: Flag, name: string, type: string) {
         super(flag, name, type);
     }
 
-    initOperation() {
-
+    public initOperation() {
         this.initRemoteSpawn(MAX_HARVEST_DISTANCE, 8, 50);
         if (this.remoteSpawn) {
             this.spawnGroup = this.remoteSpawn.spawnGroup;
-        } else {
+        }
+        else {
             console.log("ATTN: no spawnGroup found for", this.name);
             return;
         }
 
         this.addMission(new ScoutMission(this));
-        let invaderGuru = new InvaderGuru(this);
+        const invaderGuru = new InvaderGuru(this);
         invaderGuru.init();
         this.addMission(new EnhancedBodyguardMission(this, invaderGuru));
         this.addMission(new LairMission(this, invaderGuru));
@@ -53,8 +51,9 @@ export class KeeperOperation extends Operation {
         }
     }
 
-    finalizeOperation() {
+    public finalizeOperation() {
     }
-    invalidateOperationCache() {
+
+    public invalidateOperationCache() {
     }
 }

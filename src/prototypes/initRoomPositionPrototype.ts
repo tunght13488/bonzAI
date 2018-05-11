@@ -1,22 +1,23 @@
 export function initRoomPositionPrototype() {
-    RoomPosition.prototype.isNearExit = function(range: number): boolean {
-        return this.x - range <= 0 || this.x + range >= 49 || this.y - range <= 0 || this.y + range >= 49;
+    RoomPosition.prototype.isNearExit = function (range: number): boolean {
+        return this.x - range <= 0 || this.x + range >= 49
+            || this.y - range <= 0 || this.y + range >= 49;
     };
 
     RoomPosition.prototype.getFleeOptions = function (roomObject: RoomObject): RoomPosition[] {
-        let fleePositions = [];
-        let currentRange = this.getRangeTo(roomObject);
+        const fleePositions = [];
+        const currentRange = this.getRangeTo(roomObject);
 
         for (let i = 1; i <= 8; i++) {
-            let fleePosition = this.getPositionAtDirection(i);
+            const fleePosition = this.getPositionAtDirection(i);
             if (fleePosition.x > 0 && fleePosition.x < 49 && fleePosition.y > 0 && fleePosition.y < 49) {
-                let rangeToHostile = fleePosition.getRangeTo(roomObject);
+                const rangeToHostile = fleePosition.getRangeTo(roomObject);
                 if (rangeToHostile > 0) {
                     if (rangeToHostile < currentRange) {
-                        fleePosition["veryDangerous"] = true;
+                        fleePosition.veryDangerous = true;
                     }
                     else if (rangeToHostile === currentRange) {
-                        fleePosition["dangerous"] = true;
+                        fleePosition.dangerous = true;
                     }
                     fleePositions.push(fleePosition);
                 }
@@ -26,75 +27,73 @@ export function initRoomPositionPrototype() {
         return fleePositions;
     };
 
-    RoomPosition.prototype.bestFleePosition = function (hostile: Creep, ignoreRoads = false, swampRat = false): RoomPosition {
-        let options = [];
+    RoomPosition.prototype.bestFleePosition =
+        function (hostile: Creep, ignoreRoads = false, swampRat = false): RoomPosition {
+            let options = [];
 
-        let fleeOptions = this.getFleeOptions(hostile);
-        for (let i = 0; i < fleeOptions.length; i++) {
-            let option = fleeOptions[i];
-            let terrain = option.lookFor(LOOK_TERRAIN)[0];
-            if (terrain !== "wall") {
-                let creepsInTheWay = option.lookFor(LOOK_CREEPS);
-                if (creepsInTheWay.length === 0) {
-                    let structures = option.lookFor(LOOK_STRUCTURES);
-                    let hasRoad = false;
-                    let impassible = false;
-                    for (let structure of structures) {
-                        if (_.includes(OBSTACLE_OBJECT_TYPES, structure.structureType)) {
-                            // can't go through it
-                            impassible = true;
-                            break;
-                        }
-                        if (structure.structureType === STRUCTURE_ROAD) {
-                            hasRoad = true;
-                        }
-                    }
-
-                    if (!impassible) {
-                        let preference = 0;
-
-                        if (option.dangerous) {
-                            preference += 10;
-                        }
-                        else if (option.veryDangerous) {
-                            preference += 20;
+            const fleeOptions = this.getFleeOptions(hostile);
+            for (const option of fleeOptions) {
+                const terrain = option.lookFor(LOOK_TERRAIN)[0];
+                if (terrain !== "wall") {
+                    const creepsInTheWay = option.lookFor(LOOK_CREEPS);
+                    if (creepsInTheWay.length === 0) {
+                        const structures = option.lookFor(LOOK_STRUCTURES);
+                        let hasRoad = false;
+                        let impassible = false;
+                        for (const structure of structures) {
+                            if (_.includes(OBSTACLE_OBJECT_TYPES, structure.structureType)) {
+                                // can't go through it
+                                impassible = true;
+                                break;
+                            }
+                            if (structure.structureType === STRUCTURE_ROAD) hasRoad = true;
                         }
 
-                        if (hasRoad) {
-                            if (ignoreRoads) {
+                        if (!impassible) {
+                            let preference = 0;
+
+                            if (option.dangerous) {
+                                preference += 10;
+                            }
+                            else if (option.veryDangerous) {
+                                preference += 20;
+                            }
+
+                            if (hasRoad) {
+                                if (ignoreRoads) {
+                                    preference += 2;
+                                }
+                                else {
+                                    preference += 1;
+                                }
+                            }
+                            else if (terrain === "plain") {
                                 preference += 2;
                             }
-                            else {
-                                preference += 1;
+                            else if (terrain === "swamp") {
+                                if (swampRat) {
+                                    preference += 1;
+                                }
+                                else {
+                                    preference += 5;
+                                }
                             }
-                        }
-                        else if (terrain === "plain") {
-                            preference += 2;
-                        }
-                        else if (terrain === "swamp") {
-                            if (swampRat) {
-                                preference += 1;
-                            }
-                            else {
-                                preference += 5;
-                            }
-                        }
 
-                        options.push({position: option, preference: preference});
+                            options.push({position: option, preference});
+                        }
                     }
                 }
             }
-        }
 
-        if (options.length > 0) {
-            options = _(options)
-                .shuffle()
-                .sortBy("preference")
-                .value();
+            if (options.length > 0) {
+                options = _(options)
+                    .shuffle()
+                    .sortBy("preference")
+                    .value();
 
-            return options[0].position;
-        }
-    };
+                return options[0].position;
+            }
+        };
 
     /**
      * Returns all surrounding positions that are currently open
@@ -102,11 +101,11 @@ export function initRoomPositionPrototype() {
      * @returns {RoomPosition[]}
      */
     RoomPosition.prototype.openAdjacentSpots = function (ignoreCreeps?: boolean): RoomPosition[] {
-        let positions = [];
+        const positions = [];
         for (let i = 1; i <= 8; i++) {
-            let testPosition = this.getPositionAtDirection(i);
+            const testPosition = this.getPositionAtDirection(i);
 
-            if (testPosition.isPassible(ignoreCreeps)) {
+            if (testPosition.isPassable(ignoreCreeps)) {
                 // passed all tests
                 positions.push(testPosition);
             }
@@ -120,13 +119,13 @@ export function initRoomPositionPrototype() {
      * @param range - optional, can return position with linear distance > 1
      * @returns {RoomPosition}
      */
-    RoomPosition.prototype.getPositionAtDirection = function(direction: number, range?: number): RoomPosition {
+    RoomPosition.prototype.getPositionAtDirection = function (direction: number, range?: number): RoomPosition {
         if (!range) {
             range = 1;
         }
         let x = this.x;
         let y = this.y;
-        let room = this.roomName;
+        const room = this.roomName;
 
         if (direction === 1) {
             y -= range;
@@ -160,11 +159,11 @@ export function initRoomPositionPrototype() {
     };
 
     /**
-     * Look if position is currently open/passible
+     * Look if position is currently open/passable
      * @param ignoreCreeps - if true, consider positions containing creeps to be open
      * @returns {boolean}
      */
-    RoomPosition.prototype.isPassible = function(ignoreCreeps?: boolean): boolean {
+    RoomPosition.prototype.isPassable = function (ignoreCreeps?: boolean): boolean {
         if (this.isNearExit(0)) return false;
 
         // look for walls
@@ -173,12 +172,12 @@ export function initRoomPositionPrototype() {
             // look for creeps
             if (ignoreCreeps || this.lookFor(LOOK_CREEPS).length === 0) {
 
-                // look for impassible structions
-                if (_.filter(this.lookFor(LOOK_STRUCTURES), (struct: Structure) => {
-                        return struct.structureType !== STRUCTURE_ROAD
-                            && struct.structureType !== STRUCTURE_CONTAINER
-                            && struct.structureType !== STRUCTURE_RAMPART;
-                    }).length === 0 ) {
+                // look for impassible structure
+                if (_.filter(this.lookFor(LOOK_STRUCTURES), (structure: Structure) => {
+                    return structure.structureType !== STRUCTURE_ROAD
+                        && structure.structureType !== STRUCTURE_CONTAINER
+                        && structure.structureType !== STRUCTURE_RAMPART;
+                }).length === 0) {
 
                     // passed all tests
                     return true;
@@ -191,10 +190,11 @@ export function initRoomPositionPrototype() {
 
     /**
      * @param structureType
-     * @returns {Structure} structure of type structureType that resides at position (null if no structure of that type is present)
+     * @returns {Structure} structure of type structureType that resides at position (null if no structure of that type
+     *     is present)
      */
-    RoomPosition.prototype.lookForStructure = function(structureType: string): Structure {
-        let structures = this.lookFor(LOOK_STRUCTURES);
-        return _.find(structures, {structureType: structureType}) as Structure;
+    RoomPosition.prototype.lookForStructure = function (structureType: string): Structure {
+        const structures = this.lookFor(LOOK_STRUCTURES);
+        return _.find(structures, {structureType}) as Structure;
     };
 }

@@ -1,31 +1,31 @@
-import {Mission} from "./Mission";
-import {Operation} from "../operations/Operation";
-import {BankData} from "../../interfaces";
 import {helper} from "../../helpers/helper";
-import {notifier} from "../../notifier";
 import {empire} from "../../helpers/loopHelper";
+import {BankData} from "../../interfaces";
+import {notifier} from "../../notifier";
+import {Operation} from "../operations/Operation";
 import {WorldMap} from "../WorldMap";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
 
 export class PowerMission extends Mission {
 
-    clydes: Agent[];
-    bonnies: Agent[];
-    carts: Agent[];
+    public clydes: Agent[];
+    public bonnies: Agent[];
+    public carts: Agent[];
 
-    memory: {
+    public memory: {
         currentBank: BankData;
         scanIndex: number;
-        scanData: {[roomName: string]: number}
+        scanData: { [roomName: string]: number }
     };
 
     constructor(operation: Operation) {
         super(operation, "power");
     }
 
-    initMission() {
+    public initMission() {
 
-        let observer = this.room.findStructures(STRUCTURE_OBSERVER)[0] as StructureObserver;
+        const observer = this.room.findStructures(STRUCTURE_OBSERVER)[0] as StructureObserver;
         if (!observer) return;
 
         if (!Memory.powerObservers[this.room.name]) {
@@ -41,7 +41,7 @@ export class PowerMission extends Mission {
         }
     }
 
-    roleCall() {
+    public roleCall() {
         let max = 0;
         let distance;
         if (this.memory.currentBank && !this.memory.currentBank.finishing && !this.memory.currentBank.assisting) {
@@ -49,17 +49,17 @@ export class PowerMission extends Mission {
             distance = this.memory.currentBank.distance;
         }
 
-        this.bonnies = this.headCount("bonnie", () => this.configBody({ move: 25, heal: 25}), () => max, {
+        this.bonnies = this.headCount("bonnie", () => this.configBody({move: 25, heal: 25}), () => max, {
             prespawn: distance,
-            reservation: { spawns: 2, currentEnergy: 8000 }
+            reservation: {spawns: 2, currentEnergy: 8000},
         });
 
-        this.clydes = this.headCount("clyde", () => this.configBody({ move: 20, attack: 20}), () => this.bonnies.length);
+        this.clydes = this.headCount("clyde", () => this.configBody({move: 20, attack: 20}), () => this.bonnies.length);
 
         let unitsPerCart = 1;
         let maxCarts = 0;
         if (this.memory.currentBank && this.memory.currentBank.finishing && !this.memory.currentBank.assisting) {
-            let unitsNeeded = Math.ceil(this.memory.currentBank.power / 100);
+            const unitsNeeded = Math.ceil(this.memory.currentBank.power / 100);
             maxCarts = Math.ceil(unitsNeeded / 16);
             unitsPerCart = Math.ceil(unitsNeeded / maxCarts);
         }
@@ -67,9 +67,9 @@ export class PowerMission extends Mission {
         this.carts = this.headCount("powerCart", () => this.workerBody(0, unitsPerCart * 2, unitsPerCart), () => maxCarts);
     }
 
-    missionActions() {
+    public missionActions() {
         for (let i = 0; i < 2; i++) {
-            let clyde = this.clydes[i];
+            const clyde = this.clydes[i];
             if (clyde) {
                 if (!clyde.memory.myBonnieName) {
                     if (this.clydes.length === this.bonnies.length) {
@@ -81,7 +81,7 @@ export class PowerMission extends Mission {
                     this.checkForAlly(clyde);
                 }
             }
-            let bonnie = this.bonnies[i];
+            const bonnie = this.bonnies[i];
             if (bonnie) {
                 if (!bonnie.memory.myClydeName) {
                     if (this.clydes.length === this.bonnies.length) {
@@ -96,22 +96,22 @@ export class PowerMission extends Mission {
 
         if (this.carts) {
             let order = 0;
-            for (let cart of this.carts) {
+            for (const cart of this.carts) {
                 this.powerCartActions(cart, order);
                 order++;
             }
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
     }
 
-    findAlleysInRange(range: number) {
+    public findAlleysInRange(range: number) {
 
-        let roomNames = [];
+        const roomNames = [];
 
         for (let i = this.room.coords.x - range; i <= this.room.coords.x + range; i++) {
             for (let j = this.room.coords.y - range; j <= this.room.coords.y + range; j++) {
@@ -127,7 +127,7 @@ export class PowerMission extends Mission {
                     y = Math.abs(y) - 1;
                     yDir = WorldMap.negaDirection(yDir);
                 }
-                let roomName = xDir + x + yDir + y;
+                const roomName = xDir + x + yDir + y;
                 if ((x % 10 === 0 || y % 10 === 0) && Game.map.isRoomAvailable(roomName)) {
                     roomNames.push(roomName);
                 }
@@ -139,7 +139,7 @@ export class PowerMission extends Mission {
 
     private clydeActions(clyde: Agent) {
 
-        let myBonnie = Game.creeps[clyde.memory.myBonnieName];
+        const myBonnie = Game.creeps[clyde.memory.myBonnieName];
         if (!myBonnie || (!clyde.pos.isNearTo(myBonnie) && !clyde.pos.isNearExit(1))) {
             clyde.idleOffRoad(this.flag);
             return;
@@ -152,17 +152,18 @@ export class PowerMission extends Mission {
             return;
         }
 
-        let bankPos = helper.deserializeRoomPosition(this.memory.currentBank.pos);
+        const bankPos = helper.deserializeRoomPosition(this.memory.currentBank.pos);
 
         if (clyde.pos.isNearTo(bankPos)) {
             clyde.memory.inPosition = true;
-            let bank = bankPos.lookForStructure(STRUCTURE_POWER_BANK);
+            const bank = bankPos.lookForStructure(STRUCTURE_POWER_BANK);
             if (bank) {
                 if (bank.hits > 600 || clyde.ticksToLive < 5) {
                     clyde.attack(bank);
-                } else {
+                }
+                else {
                     // wait for carts
-                    for (let cart of this.carts) {
+                    for (const cart of this.carts) {
                         if (!bankPos.inRangeTo(cart, 5)) {
                             return;
                         }
@@ -170,7 +171,8 @@ export class PowerMission extends Mission {
                     clyde.attack(bank);
                 }
             }
-        } else if (myBonnie.fatigue === 0) {
+        }
+        else if (myBonnie.fatigue === 0) {
             if (this.memory.currentBank.assisting === undefined) {
                 // traveling from spawn
                 clyde.travelTo({pos: bankPos}, {ignoreRoads: true});
@@ -182,7 +184,7 @@ export class PowerMission extends Mission {
     }
 
     private bonnieActions(bonnie: Agent) {
-        let myClyde = Game.creeps[bonnie.memory.myClydeName];
+        const myClyde = Game.creeps[bonnie.memory.myClydeName];
         if (!myClyde) {
             return;
         }
@@ -212,8 +214,8 @@ export class PowerMission extends Mission {
                 return;
             }
             else {
-                let power = cart.room.find(FIND_DROPPED_RESOURCES,
-                    { filter: (r: Resource) => r.resourceType === RESOURCE_POWER})[0] as Resource;
+                const power = cart.room.find(FIND_DROPPED_RESOURCES,
+                    {filter: (r: Resource) => r.resourceType === RESOURCE_POWER})[0] as Resource;
                 if (power) {
                     if (cart.pos.isNearTo(power)) {
                         cart.pickup(power);
@@ -240,7 +242,7 @@ export class PowerMission extends Mission {
     }
 
     private powerCartApproachBank(cart: Agent, order: number) {
-        let bankPos = helper.deserializeRoomPosition(this.memory.currentBank.pos);
+        const bankPos = helper.deserializeRoomPosition(this.memory.currentBank.pos);
         if (cart.room.name !== bankPos.roomName || cart.pos.isNearExit(0)) {
             // traveling from spawn
             cart.travelTo({pos: bankPos}, {ignoreRoads: true});
@@ -255,16 +257,16 @@ export class PowerMission extends Mission {
                         cart.memory.inPosition = true;
                     }
                     else {
-                        cart.travelTo({pos: bankPos} );
+                        cart.travelTo({pos: bankPos});
                     }
                 }
                 else if (order > 0) {
-                    let lastCart = this.carts[order - 1];
+                    const lastCart = this.carts[order - 1];
                     if (cart.pos.isNearTo(lastCart)) {
                         cart.memory.inPosition = true;
                     }
                     else {
-                        cart.travelTo(lastCart );
+                        cart.travelTo(lastCart);
                     }
                 }
                 else {
@@ -272,7 +274,7 @@ export class PowerMission extends Mission {
                         cart.memory.inPosition = true;
                     }
                     else {
-                        cart.travelTo(this.clydes[0] );
+                        cart.travelTo(this.clydes[0]);
                     }
                 }
             }
@@ -282,11 +284,11 @@ export class PowerMission extends Mission {
     private checkForAlly(clyde: Agent) {
         if (clyde.pos.isNearExit(1) || !this.memory.currentBank || this.memory.currentBank.assisting !== undefined) return;
 
-        let bank = clyde.room.findStructures<StructurePowerBank>(STRUCTURE_POWER_BANK)[0];
+        const bank = clyde.room.findStructures<StructurePowerBank>(STRUCTURE_POWER_BANK)[0];
         if (!bank) return;
 
-        let allyClyde = bank.room.find(FIND_HOSTILE_CREEPS, {
-            filter: (c: Creep) => c.partCount(ATTACK) === 20 && empire.diplomat.allies[c.owner.username] && !c.pos.isNearExit(1)
+        const allyClyde = bank.room.find(FIND_HOSTILE_CREEPS, {
+            filter: (c: Creep) => c.partCount(ATTACK) === 20 && empire.diplomat.allies[c.owner.username] && !c.pos.isNearExit(1),
         })[0] as Creep;
 
         if (!allyClyde) {
@@ -294,8 +296,8 @@ export class PowerMission extends Mission {
         }
 
         if (clyde.memory.play) {
-            let myPlay = clyde.memory.play;
-            let allyPlay = allyClyde.saying;
+            const myPlay = clyde.memory.play;
+            const allyPlay = allyClyde.saying;
             if (!allyPlay || allyPlay === myPlay) {
                 console.log("POWER: we had a tie!");
                 clyde.say("tie!", true);
@@ -304,7 +306,7 @@ export class PowerMission extends Mission {
             else if ((allyPlay === "rock" && myPlay === "scissors") || (allyPlay === "scissors" && myPlay === "paper") ||
                 (allyPlay === "paper" && myPlay === "rock")) {
                 if (bank.pos.openAdjacentSpots(true).length === 1) {
-                    let bonnie = Game.creeps[clyde.memory.myBonnieName];
+                    const bonnie = Game.creeps[clyde.memory.myBonnieName];
                     bonnie.suicide();
                     clyde.suicide();
                 }
@@ -320,7 +322,7 @@ export class PowerMission extends Mission {
         }
         else {
             console.log("POWER: ally found in", clyde.room.name, "playing a game to find out who gets power");
-            let random = Math.floor(Math.random() * 3);
+            const random = Math.floor(Math.random() * 3);
             let play;
             if (random === 0) {
                 play = "rock";
@@ -336,22 +338,22 @@ export class PowerMission extends Mission {
         }
     }
 
-    private generateScanData(): {[roomName: string]: number} {
+    private generateScanData(): { [roomName: string]: number } {
         if (Game.cpu.bucket < 10000) return;
 
-        let scanData: {[roomName: string]: number} = {};
-        let spawn = this.spawnGroup.spawns[0];
-        let possibleRoomNames = this.findAlleysInRange(5);
-        for (let roomName of possibleRoomNames) {
-            let position = helper.pathablePosition(roomName);
-            let ret = empire.traveler.findTravelPath(spawn, {pos: position});
+        const scanData: { [roomName: string]: number } = {};
+        const spawn = this.spawnGroup.spawns[0];
+        const possibleRoomNames = this.findAlleysInRange(5);
+        for (const roomName of possibleRoomNames) {
+            const position = helper.pathablePosition(roomName);
+            const ret = empire.traveler.findTravelPath(spawn, {pos: position});
             if (ret.incomplete) {
                 notifier.log(`POWER: incomplete path generating scanData (op: ${this.operation.name}, roomName: ${roomName})`);
                 continue;
             }
 
-            let currentObserver = _.find(Memory.powerObservers, (value) => value[roomName]);
-            let distance = ret.path.length;
+            const currentObserver = _.find(Memory.powerObservers, value => value[roomName]);
+            const distance = ret.path.length;
             if (distance > 250) continue;
 
             if (currentObserver) {
@@ -373,13 +375,13 @@ export class PowerMission extends Mission {
     }
 
     private monitorBank(currentBank: BankData) {
-        let room = Game.rooms[currentBank.pos.roomName];
+        const room = Game.rooms[currentBank.pos.roomName];
         if (room) {
-            let bank = room.findStructures<StructurePowerBank>(STRUCTURE_POWER_BANK)[0];
+            const bank = room.findStructures<StructurePowerBank>(STRUCTURE_POWER_BANK)[0];
             if (bank) {
                 currentBank.hits = bank.hits;
                 if (!currentBank.finishing && bank.hits < 500000) {
-                    let clyde = bank.pos.findInRange<Creep>(
+                    const clyde = bank.pos.findInRange<Creep>(
                         _.filter(room.find<Creep>(FIND_MY_CREEPS), (c: Creep) => c.partCount(ATTACK) === 20), 1)[0];
                     if (clyde && bank.hits < clyde.ticksToLive * 600) {
                         console.log(`POWER: last wave needed for bank has arrived, ${this.operation.name}`);
@@ -401,8 +403,8 @@ export class PowerMission extends Mission {
     private scanForBanks(observer: StructureObserver) {
 
         if (observer.observation && observer.observation.purpose === this.name) {
-            let room = observer.observation.room;
-            let bank = observer.observation.room.findStructures<StructurePowerBank>(STRUCTURE_POWER_BANK)[0];
+            const room = observer.observation.room;
+            const bank = observer.observation.room.findStructures<StructurePowerBank>(STRUCTURE_POWER_BANK)[0];
             if (bank && bank.ticksToDecay > 4500 && room.findStructures(STRUCTURE_WALL).length === 0
                 && bank.power >= Memory.playerConfig.powerMinimum) {
                 console.log("\\o/ \\o/ \\o/", bank.power, "power found at", room, "\\o/ \\o/ \\o/");
@@ -419,9 +421,9 @@ export class PowerMission extends Mission {
 
         if (this.spawnGroup.averageAvailability < .5 || Math.random() > .2) { return; }
 
-        let scanData = Memory.powerObservers[this.room.name];
+        const scanData = Memory.powerObservers[this.room.name];
         if (this.memory.scanIndex >= Object.keys(scanData).length) { this.memory.scanIndex = 0; }
-        let roomName = Object.keys(scanData)[this.memory.scanIndex++];
+        const roomName = Object.keys(scanData)[this.memory.scanIndex++];
         observer.observeRoom(roomName, this.name);
     }
 }

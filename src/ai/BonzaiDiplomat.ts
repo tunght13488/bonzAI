@@ -1,8 +1,9 @@
 import {Diplomat} from "./Diplomat";
+
 export class BonzaiDiplomat extends Diplomat {
 
-    public safe: {[username: string]: boolean};
-    public danger: {[username: string]: boolean};
+    public safe: { [username: string]: boolean };
+    public danger: { [username: string]: boolean };
 
     constructor() {
         super();

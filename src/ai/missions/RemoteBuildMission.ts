@@ -1,11 +1,12 @@
-import {Mission} from "./Mission";
 import {Operation} from "../operations/Operation";
 import {Agent} from "./Agent";
+import {Mission} from "./Mission";
+
 export class RemoteBuildMission extends Mission {
 
-    builders: Agent[];
-    construction: ConstructionSite[];
-    recycleWhenDone: boolean;
+    public builders: Agent[];
+    public construction: ConstructionSite[];
+    public recycleWhenDone: boolean;
     private boost: boolean;
 
     /**
@@ -21,7 +22,7 @@ export class RemoteBuildMission extends Mission {
         this.allowSpawn = allowSpawn;
     }
 
-    initMission() {
+    public initMission() {
         if (!this.hasVision) {
             return; // early
         }
@@ -29,20 +30,20 @@ export class RemoteBuildMission extends Mission {
         this.construction = this.room.find<ConstructionSite>(FIND_MY_CONSTRUCTION_SITES);
     }
 
-    roleCall() {
-        let maxBuilders = () => this.construction && this.construction.length > 0 ? 1 : 0;
-        let getBody = () => {
+    public roleCall() {
+        const maxBuilders = () => this.construction && this.construction.length > 0 ? 1 : 0;
+        const getBody = () => {
             return this.bodyRatio(1, 1, 1, .8, 10);
         };
         let memory;
         if (this.memory.activateBoost || (this.room.controller && this.room.controller.my)) {
-            memory = { boosts: [RESOURCE_CATALYZED_LEMERGIUM_ACID], allowUnboosted: true};
+            memory = {boosts: [RESOURCE_CATALYZED_LEMERGIUM_ACID], allowUnboosted: true};
         }
-        this.builders = this.headCount("remoteBuilder", getBody, maxBuilders, {memory: memory});
+        this.builders = this.headCount("remoteBuilder", getBody, maxBuilders, {memory});
     }
 
-    missionActions() {
-        for (let builder of this.builders) {
+    public missionActions() {
+        for (const builder of this.builders) {
             if (!this.waypoints && this.recycleWhenDone && this.construction.length === 0) {
                 this.recycleBuilder(builder);
             }
@@ -52,15 +53,15 @@ export class RemoteBuildMission extends Mission {
         }
     }
 
-    finalizeMission() {
+    public finalizeMission() {
     }
 
-    invalidateMissionCache() {
+    public invalidateMissionCache() {
     }
 
     private builderActions(builder: Agent) {
 
-        let fleeing = builder.fleeHostiles();
+        const fleeing = builder.fleeHostiles();
         if (fleeing) return; // early
 
         if (!this.hasVision) {
@@ -72,13 +73,13 @@ export class RemoteBuildMission extends Mission {
 
         builder.stealNearby("creep");
 
-        let hasLoad = builder.hasLoad();
+        const hasLoad = builder.hasLoad();
         if (!hasLoad) {
             builder.procureEnergy(undefined, true, true);
             return; // early
         }
 
-        let closest = this.findConstruction(builder);
+        const closest = this.findConstruction(builder);
         if (!closest) {
             builder.idleNear(this.flag);
             return; // early
@@ -94,7 +95,7 @@ export class RemoteBuildMission extends Mission {
     }
 
     private recycleBuilder(builder: Agent) {
-        let spawn = this.spawnGroup.spawns[0];
+        const spawn = this.spawnGroup.spawns[0];
         if (builder.carry.energy > 0 && spawn.room.storage) {
             if (builder.pos.isNearTo(spawn.room.storage)) {
                 builder.transfer(spawn.room.storage, RESOURCE_ENERGY);
@@ -104,27 +105,29 @@ export class RemoteBuildMission extends Mission {
             }
         }
         else {
-            let spawn = this.spawnGroup.spawns[0];
-            if (builder.pos.isNearTo(spawn)) {
-                spawn.recycleCreep(builder.creep);
+            const _spawn = this.spawnGroup.spawns[0];
+            if (builder.pos.isNearTo(_spawn)) {
+                _spawn.recycleCreep(builder.creep);
             }
             else {
-                builder.travelTo(spawn);
+                builder.travelTo(_spawn);
             }
         }
     }
 
     private findConstruction(builder: Agent): ConstructionSite {
         if (builder.memory.siteId) {
-            let site = Game.getObjectById<ConstructionSite>(builder.memory.siteId)
+            const site = Game.getObjectById<ConstructionSite>(builder.memory.siteId);
             if (site) {
                 return site;
-            } else {
+            }
+            else {
                 delete builder.memory.siteId;
                 return this.findConstruction(builder);
             }
-        } else {
-            let site = builder.pos.findClosestByRange<ConstructionSite>(this.construction);
+        }
+        else {
+            const site = builder.pos.findClosestByRange<ConstructionSite>(this.construction);
             if (site) {
                 builder.memory.siteId = site.id;
                 return site;

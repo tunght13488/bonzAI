@@ -1,6 +1,6 @@
 export const notifier = {
     log(message: string, severity = 5) {
-        let styles = {
+        const styles = {
             [0]: () => console.log(message),
             [1]: () => console.log(`<font color="#00FF00" severity="1">${message}</font>`),
             [2]: () => console.log(`<font color="#00FFFF" severity="2">${message}</font>`),
@@ -12,7 +12,7 @@ export const notifier = {
             styles[severity]();
         }
         if (severity === 5) {
-            Memory.notifier.push({time: Game.time, earthTime: this.earthTime(-7), message: message});
+            Memory.notifier.push({time: Game.time, earthTime: this.earthTime(-7), message});
         }
         while (Memory.notifier.length > 1000) {
             Memory.notifier.shift();
@@ -20,14 +20,14 @@ export const notifier = {
     },
 
     review(limit = Number.MAX_VALUE, burnAfterReading = false) {
-        let messageCount = Memory.notifier.length;
+        const messageCount = Memory.notifier.length;
 
         let count = 0;
-        for (let value of Memory.notifier) {
-            let secondsElapsed = (Game.time - value.time) * 3;
-            let seconds = secondsElapsed % 60;
-            let minutes = Math.floor(secondsElapsed / 60);
-            let hours = Math.floor(secondsElapsed / 3600);
+        for (const value of Memory.notifier) {
+            const secondsElapsed = (Game.time - value.time) * 3;
+            const seconds = secondsElapsed % 60;
+            const minutes = Math.floor(secondsElapsed / 60);
+            const hours = Math.floor(secondsElapsed / 3600);
             console.log(`\n${value.time} (roughly ${
                 hours > 0 ? `${hours} hours, ` : ""}${
                 minutes > 0 ? `${minutes} minutes, ` : ""}${
@@ -46,15 +46,15 @@ export const notifier = {
             }
         }
 
-        return `viewing ${count} of ${messageCount} notifications`
+        return `viewing ${count} of ${messageCount} notifications`;
     },
 
     clear(term: string) {
         if (term) {
             let count = 0;
             term = term.toLocaleLowerCase();
-            let newArray = [];
-            for (let value of Memory.notifier) {
+            const newArray = [];
+            for (const value of Memory.notifier) {
                 if (value.message.toLocaleLowerCase().indexOf(term) < 0) {
                     newArray.push(value);
                     count++;
@@ -62,12 +62,12 @@ export const notifier = {
                 Memory.notifier = newArray;
             }
 
-            return `removed ${count} messages;`
+            return `removed ${count} messages;`;
         }
         else {
-            let count = Memory.notifier.length;
+            const count = Memory.notifier.length;
             Memory.notifier = [];
-            return `removed ${count} messages;`
+            return `removed ${count} messages;`;
         }
-    }
+    },
 };

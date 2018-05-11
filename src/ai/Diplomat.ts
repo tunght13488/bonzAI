@@ -1,8 +1,8 @@
 export class Diplomat {
 
-    public allies: {[username: string]: boolean};
-    public foes: {[username: string]: boolean};
-    public partners: {[username: string]: boolean};
+    public allies: { [username: string]: boolean };
+    public foes: { [username: string]: boolean };
+    public partners: { [username: string]: boolean };
 
     constructor() {
         if (!Memory.empire) { Memory.empire = {}; }
@@ -18,8 +18,8 @@ export class Diplomat {
         this.partners = Memory.empire.partners;
     }
 
-    checkEnemy(username: string, roomName: string) {
-        if ( this.allies[username] ) {
+    public checkEnemy(username: string, roomName: string) {
+        if (this.allies[username]) {
             return false;
         }
 
@@ -33,9 +33,9 @@ export class Diplomat {
     public static strangerDanger(username: string, roomName: string) {
         if (!Memory.strangerDanger) { Memory.strangerDanger = {}; }
         if (!Memory.strangerDanger[username]) { Memory.strangerDanger[username] = []; }
-        let lastReport = _.last(Memory.strangerDanger[username]) as StrangerReport;
-        if (!lastReport || lastReport.tickSeen < Game.time - 2000 ) {
-            let report = { tickSeen: Game.time, roomName: roomName };
+        const lastReport = _.last(Memory.strangerDanger[username]) as StrangerReport;
+        if (!lastReport || lastReport.tickSeen < Game.time - 2000) {
+            const report = {tickSeen: Game.time, roomName};
             console.log("STRANGER DANGER: one of", username, "\'s creeps seen in", roomName);
             Memory.strangerDanger[username].push(report);
             while (Memory.strangerDanger[username].length > 10) Memory.strangerDanger[username].shift();
@@ -45,30 +45,28 @@ export class Diplomat {
 }
 
 export const ALLIES = {
-    "taiga": true,
-    "Reini": true,
-    "bonzaiferroni": true,
-    "SteeleR": true,
-    "Vervorris": true,
-    "Jeb": true,
-    "danny": true,
-    "Atavus": true,
-    "Ashburnie": true,
-    "ricane": true,
-    "trebbettes": true,
-    "bovius": true,
+    // taiga: true,
+    // Reini: true,
+    // bonzaiferroni: true,
+    // SteeleR: true,
+    // Vervorris: true,
+    // Jeb: true,
+    // danny: true,
+    // Atavus: true,
+    // Ashburnie: true,
+    // ricane: true,
+    // trebbettes: true,
+    // bovius: true,
 };
 
 export const TRADE_PARTNERS = {
-    "bonzaiferroni": true,
-    "taiga": true,
-    "Reini": true,
-    "Vervorris": true,
-    "Jeb": true,
-    "trebbettes": true,
-    "ricane": true,
+    // bonzaiferroni: true,
+    // taiga: true,
+    // Reini: true,
+    // Vervorris: true,
+    // Jeb: true,
+    // trebbettes: true,
+    // ricane: true,
 };
 
-export const FOES = {
-
-};
+export const FOES = {};
