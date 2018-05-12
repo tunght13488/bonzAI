@@ -11,9 +11,9 @@ export const notifier = {
         if (styles[severity]) {
             styles[severity]();
         }
-        if (severity === 5) {
-            Memory.notifier.push({time: Game.time, earthTime: this.earthTime(-7), message});
-        }
+        // if (severity === 5) {
+        //     Memory.notifier.push({time: Game.time, earthTime: this.earthTime(-7), message});
+        // }
         while (Memory.notifier.length > 1000) {
             Memory.notifier.shift();
         }
