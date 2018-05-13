@@ -197,7 +197,6 @@ export abstract class Operation {
     }
 
     public initRemoteSpawn(roomDistanceLimit: number, levelRequirement: number, margin = 0) {
-
         // invalidated periodically
         if (!this.spawnData.nextSpawnCheck || Game.time >= this.spawnData.nextSpawnCheck) {
             const spawnGroups = _.filter(_.toArray(empire.spawnGroups),

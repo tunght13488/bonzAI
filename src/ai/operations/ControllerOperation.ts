@@ -24,6 +24,7 @@ import {UpgradeMission} from "../missions/UpgradeMission";
 import {SeedAnalysis} from "../SeedAnalysis";
 import {DefenseGuru} from "./DefenseGuru";
 import {Operation} from "./Operation";
+import {RoomHelper} from "../RoomHelper";
 
 export abstract class ControllerOperation extends Operation {
 
@@ -61,11 +62,58 @@ export abstract class ControllerOperation extends Operation {
         }
     }
 
+    public initRemoteSpawn(roomDistanceLimit: number, levelRequirement: number, margin = 0) {
+        // invalidated periodically
+        if (!this.spawnData.nextSpawnCheck || Game.time >= this.spawnData.nextSpawnCheck) {
+            console.log("roomDistanceLimit", roomDistanceLimit);
+            console.log("empire spawnGroups", JSON.stringify(_.toArray(empire.spawnGroups), null, 2));
+            const spawnGroups = _.filter(_.toArray(empire.spawnGroups),
+                spawnGroup => spawnGroup.room.controller.level >= levelRequirement
+                    && spawnGroup.room.name !== this.flag.pos.roomName);
+            console.log("spawnGroups", JSON.stringify(spawnGroups, null, 2));
+            let bestGroups = RoomHelper.findClosest(this.flag, spawnGroups,
+                {margin, linearDistanceLimit: roomDistanceLimit});
+            console.log("bestGroups", JSON.stringify(bestGroups, null, 2));
+
+            if (bestGroups.length > 0) {
+                bestGroups = _.sortBy(bestGroups, value => value.distance);
+                this.spawnData.spawnRooms = _.map(bestGroups, value => {
+                    return {distance: value.distance, roomName: value.destination.room.name};
+                });
+                this.spawnData.nextSpawnCheck = Game.time + helper.randomInterval(10000); // Around 10 hours
+            }
+            else {
+                this.spawnData.nextSpawnCheck = Game.time + 100; // Around 6 min
+            }
+            console.log(`SPAWN: finding spawn rooms in ${this.name}, result: ${bestGroups.length} found`);
+        }
+
+        if (this.spawnData.spawnRooms) {
+            let bestAvailability = 0;
+            let bestSpawn: { distance: number, roomName: string };
+            for (const data of this.spawnData.spawnRooms) {
+                const spawnGroup = empire.getSpawnGroup(data.roomName);
+                if (!spawnGroup) { continue; }
+                if (spawnGroup.averageAvailability >= 1) {
+                    bestSpawn = data;
+                    break;
+                }
+                if (spawnGroup.averageAvailability > bestAvailability) {
+                    bestAvailability = spawnGroup.averageAvailability;
+                    bestSpawn = data;
+                }
+            }
+            if (bestSpawn) {
+                this.remoteSpawn = {distance: bestSpawn.distance, spawnGroup: empire.getSpawnGroup(bestSpawn.roomName)};
+            }
+        }
+    }
+
     public initOperation() {
         this.autoLayout();
 
         this.spawnGroup = empire.getSpawnGroup(this.flag.pos.roomName);
-        this.initRemoteSpawn(8, 8);
+        this.initRemoteSpawn(1000, 8);
 
         let remoteSpawning = false;
         if (!this.spawnGroup) {
